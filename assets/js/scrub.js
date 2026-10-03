@@ -165,7 +165,7 @@
     var frame = null, near = false;
     var seekPending = false, lastWant = -1;
     var asked = false, primed = false, swapPending = false;
-    var builtPortrait = null;
+    var builtPortrait = null, loadTimer = null;
 
     /* ---------------------------------------------------------- */
 
@@ -235,40 +235,62 @@
 
     /* ---------------------------------------------------------- */
 
-    function fetchPlate() {
-      if (asked || !video) return;
-      asked = true;
-      video.preload = 'auto';
-      video.load();
-    }
-
     function thrifty() {
       var c = navigator.connection;
       if (!c) return false;
       return !!c.saveData || /^(slow-)?2g$/.test(c.effectiveType || '');
     }
 
-    /* Two axes.
+    function plateDef() {
+      return PORTRAIT.matches ? opts.plates.portrait : opts.plates.wide;
+    }
 
-       **Composition** is the stylesheet's — a portrait plate carries
-       its own blurred surround baked in, so it is a different picture
-       rather than a smaller one, and the file has to agree with the
-       layout or a rotation leaves portrait bands under a landscape
-       composition. That test is exactly `(max-aspect-ratio: 1/1)`.
+    function lowSrc() {
+      return 'assets/video/' + plateDef().lo;
+    }
 
-       **Resolution** is the display's. A plate is drawn with
-       `object-fit: cover`, so the width it is actually rasterised at is
-       not the viewport width — on a viewport narrower in aspect than
-       the plate, the height binds and the picture overflows sideways.
-       Hence max(vw, vh × aspect), in device pixels. Below the
-       threshold the extra pixels cannot be resolved and would only be
-       bytes, so they are not sent. */
+    /* Start with the standard plate. The 2x encodes are useful on very
+       dense/large displays, but scroll-scrubbed all-intra video is much
+       heavier than normal playback and four simultaneous 2x downloads
+       can leave the middle of the experience waiting on decode/network. */
     function wantSrc() {
-      var p = PORTRAIT.matches ? opts.plates.portrait : opts.plates.wide;
-      var drawn = Math.max(window.innerWidth, window.innerHeight * p.ar) *
-                  (window.devicePixelRatio || 1);
-      var hi = drawn >= p.hi && !thrifty();
+      var p = plateDef();
+      var dpr = window.devicePixelRatio || 1;
+      var drawn = Math.max(window.innerWidth, window.innerHeight * p.ar) * dpr;
+      var memory = navigator.deviceMemory || 4;
+      var hi = drawn >= p.hi * 1.55 && dpr > 1 && memory >= 6 && !thrifty();
       return 'assets/video/' + (hi ? p.hiSrc : p.lo);
+    }
+
+    function setPlate(src, forceLoad) {
+      if (!video) return;
+      if (video.getAttribute('src') !== src) {
+        primed = false;
+        lastWant = -1;
+        video.setAttribute('src', src);
+      }
+      video.preload = forceLoad ? 'auto' : 'metadata';
+      if (forceLoad) video.load();
+    }
+
+    function fallbackToLow() {
+      if (!video || video.readyState >= 2) return;
+      var low = lowSrc();
+      if (video.getAttribute('src') === low) return;
+      setPlate(low, true);
+    }
+
+    function fetchPlate() {
+      if (asked || !video) return;
+      asked = true;
+      setPlate(video.getAttribute('src') || wantSrc(), true);
+
+      /* If a 2x plate is slow to become seekable, cancel it and use the
+         standard encode. This keeps a slow CDN/network from producing
+         a black chapter while preserving 2x on machines that can
+         actually start it promptly. */
+      clearTimeout(loadTimer);
+      loadTimer = setTimeout(fallbackToLow, 2200);
     }
 
     /* Swapping costs a re-download, so it only ever happens on a real
@@ -281,10 +303,7 @@
       if (near && video.readyState >= 2) { swapPending = true; return; }
 
       swapPending = false;
-      primed = false;
-      lastWant = -1;              /* a new file starts at frame one */
-      video.setAttribute('src', want);
-      if (asked) { video.preload = 'auto'; video.load(); }
+      setPlate(want, asked);
     }
 
     /* Safari on iOS will not decode for seeking until the element has
@@ -312,10 +331,13 @@
         return;
       }
 
-      /* two screens out: start fetching */
-      new IntersectionObserver(function (e) {
-        if (e[0].isIntersecting) fetchPlate();
-      }, { rootMargin: '150% 0px' }).observe(sec);
+      /* Start the next plate well before it reaches the viewport, but
+         do not download every chapter at page load. */
+      new IntersectionObserver(function (e, obs) {
+        if (!e[0].isIntersecting) return;
+        fetchPlate();
+        obs.unobserve(sec);
+      }, { rootMargin: '260% 0px' }).observe(sec);
 
       /* on screen: run the loop. Off screen: stop it, and hand the
          compositor hints back. */
@@ -341,7 +363,16 @@
       video.muted = true;
       video.pause();
       video.addEventListener('loadeddata', function () {
+        clearTimeout(loadTimer);
         read(); qNow = qTarget; opts.paint(qNow); drive(qNow);
+      });
+      video.addEventListener('canplay', function () {
+        clearTimeout(loadTimer);
+      });
+      video.addEventListener('error', function () {
+        clearTimeout(loadTimer);
+        var low = lowSrc();
+        if (video.getAttribute('src') !== low) setPlate(low, true);
       });
       /* nothing in a scrubbed chapter ever plays */
       video.addEventListener('play', function () {
@@ -357,7 +388,7 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', reflow, { passive: true });
     window.addEventListener('orientationchange', reflow, { passive: true });
-    window.addEventListener('load', function () { fetchPlate(); reflow(); });
+    window.addEventListener('load', function () { reflow(); });
     if (PORTRAIT.addEventListener) PORTRAIT.addEventListener('change', reflow);
 
     watch();
