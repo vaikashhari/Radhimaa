@@ -195,18 +195,15 @@
        frame forever. */
     function drive(q) {
       if (!video || video.readyState < 2) return;
-      var pp = util.clamp01(util.ramp(q, LEAD_IN, LEAD_OUT));
-      /* An optional speed ramp. Scroll still maps monotonically onto the
-         picture — it is not a jump cut — but a plate whose last two
-         thirds are a held frame should not spend two thirds of the
-         runway on it. Omit `curve` and the map is linear, which is what
-         a plate with even motion wants. */
-      var want = PLATE_END * (opts.curve ? opts.curve(pp) : pp);
-      if (video.seeking) { seekPending = true; return; }
+
+      /* The chapter effects still follow scroll progress, but the plate now
+         plays as real video while the section is visible. This is more
+         reliable on CDN-hosted deployments than issuing a seek on every
+         scroll frame, and avoids a poster-only/static middle section. */
       seekPending = false;
-      if (Math.abs(want - lastWant) > SEEK_EPS) {
-        lastWant = want;
-        try { video.currentTime = want; } catch (e) {}
+      if (near && video.paused) {
+        var p = video.play();
+        if (p && p.catch) p.catch(function () {});
       }
     }
 
@@ -309,11 +306,12 @@
     /* Safari on iOS will not decode for seeking until the element has
        been played once. One muted frame, immediately paused. */
     function prime() {
-      if (primed || !video) return;
+      if (!video) return;
       primed = true;
+      video.muted = true;
+      video.loop = true;
       var p = video.play();
-      if (p && p.then) p.then(function () { video.pause(); }, function () {});
-      else video.pause();
+      if (p && p.catch) p.catch(function () {});
     }
 
     function rebuild() {
@@ -349,6 +347,7 @@
           measure(); read(); qNow = qTarget; opts.paint(qNow); drive(qNow); prime();
         } else {
           stop();
+          if (video) video.pause();
           if (swapPending) syncPlate();
         }
       }, { rootMargin: '15% 0px' }).observe(sec);
@@ -361,10 +360,13 @@
 
     if (video) {
       video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
       video.pause();
       video.addEventListener('loadeddata', function () {
         clearTimeout(loadTimer);
-        read(); qNow = qTarget; opts.paint(qNow); drive(qNow);
+        read(); qNow = qTarget; opts.paint(qNow);
+        if (near) prime();
       });
       video.addEventListener('canplay', function () {
         clearTimeout(loadTimer);
@@ -374,10 +376,8 @@
         var low = lowSrc();
         if (video.getAttribute('src') !== low) setPlate(low, true);
       });
-      /* nothing in a scrubbed chapter ever plays */
-      video.addEventListener('play', function () {
-        if (primed) video.pause();
-      });
+      /* Middle chapter plates play while visible; scroll still drives
+         typography, atmosphere and section progress. */
     }
 
     measure();
