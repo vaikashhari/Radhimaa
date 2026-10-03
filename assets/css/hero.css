@@ -1,0 +1,1242 @@
+/* ============================================================
+   RADHIMAA — PHASE 1 · SCENE 01
+   The hero is a scene, not a component. Everything below either
+   serves the film or gets out of its way.
+   ============================================================ */
+
+/* Smooth mask interpolation for the neon ignition sweep.
+   Degrades to a hard switch where @property is unsupported —
+   opacity/blur/transform still carry the reveal. */
+/* These three are written every frame. Registered as non-inheriting so a
+   write invalidates only the element it lands on — on :root, an inheriting
+   custom property forces a style recalc across the whole document, which
+   with the interface layer in place cost ~16ms of every scroll frame. */
+@property --p  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --mx { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --my { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+@property --sweep {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: -30%;
+}
+
+:root {
+  /* sampled from the reference composition */
+  --gold: #f4c962;              /* logo, play ring, accents */
+  --gold-soft: #d7ba7d;         /* rail text, waveform */
+  --ui: #e5e2e1;                /* navigation */
+  --ui-2: #cfc5b9;              /* secondary labels */
+  --ui-3: #beb7b3;              /* social */
+  --ui-dim: #8a8785;            /* bottom controls */
+  --title-gold: #f5d518;        /* highlight of the supplied title artwork */
+  --blue-air: rgba(58, 116, 196, .20);
+
+  /* --p, --mx and --my are written straight onto their consumers by JS;
+     see the @property block above for why they are not inherited. */
+
+  --par-scene: 12px;            /* how far the film drifts with the cursor */
+  --par-type: 5px;              /* the typography answers, but more quietly */
+
+  /* Where the title's own centre sits. It was 40% while a play disc,
+     a waveform and two platform buttons hung beneath it; with those gone
+     it moves down into the plate's calmest band — a 24x14 luminance and
+     activity map over the loop puts the quietest cells at rows 46-68%
+     (activity 5-13) — which is also what opens the space above it. */
+  --title-y: 44%;
+  --title-w: max(260px, min(54vw, 84vh, 960px));
+
+  /* The ignition blur has to scale with the lettering. Fixed pixels read as
+     atmosphere on an 840px title and as an unreadable smear on a 300px one. */
+  --ignite-blur: 15px;
+  --ignite-blur-mid: 9px;
+  --ignite-blur-late: 2.4px;
+  --title-glow: 22px;
+  --title-drop: 30px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: #000;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #000;
+  color: #fff;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ============================================================
+   STAGE + STICKY SCENE
+   The stage is the scroll runway; the hero sticks inside it so
+   Scene 01 dissolves into Scene 02 rather than ending.
+   ============================================================ */
+
+.stage {
+  position: relative;
+  height: 200vh;
+  height: 200svh;
+}
+
+.hero {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #000;
+  isolation: isolate;
+}
+
+.hero__viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* Cursor drift and the scroll push-in share one transform. */
+.hero__parallax {
+  position: absolute;
+  inset: 0;
+  transform:
+    translate3d(calc(var(--mx) * var(--par-scene)), calc(var(--my) * var(--par-scene)), 0)
+    scale(calc(1 + var(--p) * .14));
+  transform-origin: 50% 42%;
+}
+
+/* The opening reveal lives here, separate from scroll + parallax. */
+.hero__media {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.14);
+  filter: blur(16px);
+  will-change: opacity, transform, filter;
+}
+
+.is-revealed .hero__media {
+  opacity: 1;
+  transform: scale(1);
+  filter: blur(0px);
+  transition:
+    opacity 1750ms cubic-bezier(.33, 0, .25, 1),
+    filter  2000ms cubic-bezier(.30, 0, .20, 1),
+    transform 3200ms cubic-bezier(.16, .84, .28, 1);
+}
+
+/* Once settled, stop paying for the compositor hints and the filter. */
+.is-settled .hero__media {
+  will-change: auto;
+  filter: none;
+}
+
+/* ---------- the film ---------- */
+
+/* Landscape: full bleed. Framed slightly high so the falling figure
+   sits on the upper third rather than dead centre. */
+.hero__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 44%;
+  display: block;
+  background: #000;
+}
+
+/* Very slow atmospheric breathing — a couple of percent, no more. */
+.is-settled .hero__video { animation: breathe 34s ease-in-out infinite alternate; }
+
+@keyframes breathe {
+  from { transform: scale(1)     translate3d(0, 0, 0); }
+  to   { transform: scale(1.035) translate3d(0, -.6%, 0); }
+}
+
+/* ---------- atmospheric treatment ----------
+   Vignette + light spill only. The film is never flattened
+   under a blanket overlay. */
+
+.hero__grade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(132% 96% at 50% 40%,
+      rgba(0,0,0,0) 32%, rgba(0,0,0,.28) 68%, rgba(0,0,0,.76) 100%),
+    linear-gradient(to bottom,
+      rgba(0,0,0,.44) 0%, rgba(0,0,0,0) 22%,
+      rgba(0,0,0,0) 58%, rgba(2,6,14,.62) 100%);
+}
+
+/* Blue air. On phones this is what makes the film's edges read as
+   light spilling into darkness instead of a video with a border. */
+.hero__grade::before {
+  content: "";
+  position: absolute;
+  inset: -14%;
+  background:
+    radial-gradient(46% 40% at 33% 42%, var(--blue-air), transparent 66%),
+    radial-gradient(40% 34% at 69% 56%, rgba(30, 74, 140, .16), transparent 68%);
+  mix-blend-mode: screen;
+  animation: drift 52s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from { transform: translate3d(-1.6%, -1%, 0) scale(1); }
+  to   { transform: translate3d( 1.8%,  1.4%, 0) scale(1.06); }
+}
+
+/* ---------- film grain ----------
+   Oversized and moved by transform so it composites on the GPU.
+   Overlay keeps true blacks black. */
+.hero__grain {
+  position: absolute;
+  inset: -140px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: .055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1.1s steps(5) infinite;
+}
+
+@keyframes grain {
+  0%   { transform: translate3d(0, 0, 0); }
+  20%  { transform: translate3d(-6%, 4%, 0); }
+  40%  { transform: translate3d(5%, -5%, 0); }
+  60%  { transform: translate3d(-4%, -3%, 0); }
+  80%  { transform: translate3d(6%, 3%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   ============================================================ */
+
+.hero__type {
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* half the title's own height, so its centre lands on --title-y exactly */
+  top: calc(var(--title-y) - var(--title-w) / 6.434);
+  z-index: 3;
+  padding: 0 6vw;
+  text-align: center;
+  pointer-events: none;
+
+  /* scroll exit: the type leaves before the film does */
+  opacity: calc(1 - var(--p) * 2.4);
+  transform: translate3d(0, calc(var(--p) * -72px), 0);
+}
+
+.hero__typeInner {
+  transform: translate3d(calc(var(--mx) * var(--par-type)), calc(var(--my) * var(--par-type)), 0);
+}
+
+/* The scrim.
+   Measured: the gold holds 4.7–5.2:1 against the plate for most of the loop
+   but collapses to 2.46:1 during the lightning, when the whole frame goes
+   bright. This is a soft elliptical falloff — not a panel and not a blanket
+   overlay — that buys back the separation on bright frames while being
+   invisible on dark ones, where it only takes near-black to near-black.
+   It lives outside .hero__title so the reveal's blur and mask never touch it. */
+.hero__type::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 168%;
+  height: 300%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(44% 50% at 50% 50%,
+    rgba(0, 0, 0, .50) 0%, rgba(0, 0, 0, .38) 38%,
+    rgba(0, 0, 0, .16) 64%, rgba(0, 0, 0, .04) 80%, transparent 92%);
+}
+
+.is-lit .hero__type::before {
+  opacity: 1;
+  transition: opacity 1600ms cubic-bezier(.3, 0, .3, 1);
+}
+
+.hero__title {
+  position: relative;
+  margin: 0 auto;
+  width: var(--title-w);
+  line-height: 0;
+
+  opacity: 0;
+  transform: translate3d(0, 22px, 0) scale(.972);
+  filter: blur(var(--ignite-blur));
+  --sweep: -30%;
+  -webkit-mask-image: linear-gradient(95deg, #000 calc(var(--sweep) - 78%), transparent var(--sweep));
+          mask-image: linear-gradient(95deg, #000 calc(var(--sweep) - 78%), transparent var(--sweep));
+  will-change: opacity, transform, filter;
+}
+
+.hero__title img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Separation comes from a tight dark shadow hugging the letterforms, not
+     from glow — it holds the edges against bright cloud without haloing. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .92))
+          drop-shadow(0 3px 12px rgba(0, 0, 0, .72))
+          drop-shadow(0 0 var(--title-glow) rgba(245, 213, 24, .14));
+}
+
+/* The reveal.
+   Opacity only ever climbs — the earlier version dipped mid-animation for a
+   neon flicker, which is precisely the kind of flourish that costs legibility.
+   Sharp by ~1.3s, fully settled at 2.2s, then it holds. */
+.is-lit .hero__title {
+  animation: ignite 2200ms cubic-bezier(.20, .64, .26, 1) both;
+}
+
+@keyframes ignite {
+  0% {
+    opacity: 0;
+    --sweep: -30%;
+    filter: blur(var(--ignite-blur));
+    transform: translate3d(0, 22px, 0) scale(.972);
+  }
+  30% {
+    opacity: .55;
+    --sweep: 70%;
+    filter: blur(var(--ignite-blur-mid));
+  }
+  60% {
+    opacity: .93;
+    --sweep: 140%;
+    filter: blur(var(--ignite-blur-late));
+  }
+  100% {
+    opacity: 1;
+    --sweep: 190%;
+    filter: blur(0px);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* The mask is only needed while the reveal is running. Left in place it
+   clips the letterforms' own shadow at the element box, which shows up as
+   a faint rectangle around the wordmark. Dropping it also retires the
+   extra compositing layer once the title is static. */
+.is-settled-title .hero__title {
+  will-change: auto;
+  -webkit-mask-image: none;
+          mask-image: none;
+}
+
+/* ---------- tagline ---------- */
+
+.hero__tagline {
+  margin: clamp(20px, 3.2vh, 40px) auto 0;
+  max-width: 46ch;
+  font-size: clamp(10px, .78vw + 6px, 14px);
+  font-weight: 300;
+  letter-spacing: .46em;
+  text-indent: .46em;         /* balances the trailing letter-space */
+  line-height: 1.9;
+  text-transform: uppercase;
+  color: rgba(233, 238, 248, .62);
+
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+  filter: blur(7px);
+}
+
+.is-tagged .hero__tagline {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: blur(0px);
+  transition:
+    opacity   1500ms cubic-bezier(.26, 0, .26, 1),
+    filter    1500ms cubic-bezier(.26, 0, .26, 1),
+    transform 1800ms cubic-bezier(.16, .8, .26, 1);
+}
+
+/* ============================================================
+   SCROLL — darkness closing over Scene 01
+   ============================================================ */
+
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background: #000;
+  opacity: calc(var(--p) * .96);
+}
+
+.scene-next {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: #000;
+}
+
+/* ============================================================
+   THE OPENING DARKNESS
+   ============================================================ */
+
+.curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #000;
+  pointer-events: none;
+}
+
+.is-revealed .curtain {
+  opacity: 0;
+  transition: opacity 2200ms cubic-bezier(.36, 0, .28, 1);
+}
+
+.is-done .curtain { visibility: hidden; }
+
+/* ============================================================
+   PORTRAIT — a composition of its own, not a squeezed desktop.
+
+   Full-bleed cover on a phone crops a 16:9 plate to ~26% of its
+   width: the figure's face gets cut in half and the fall is lost.
+   So the film plays as a widescreen frame feathered into black,
+   with the title in the darkness below it.
+   ============================================================ */
+
+@media (max-aspect-ratio: 1/1) {
+  :root {
+    --title-y: 50%;
+    --title-w: min(84vw, 460px);
+    --par-scene: 0px;
+    --par-type: 0px;
+
+    --ignite-blur: 7px;
+    --ignite-blur-mid: 4.2px;
+    --ignite-blur-late: 1.2px;
+    --title-glow: 12px;
+    --title-drop: 16px;
+  }
+
+  .hero__video {
+    inset: auto;
+    left: 50%;
+    top: 38%;
+    width: 138%;
+    height: auto;
+    max-width: none;
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+    -webkit-mask-image: linear-gradient(to bottom,
+      transparent 0%, rgba(0,0,0,.55) 12%, #000 24%, #000 77%, rgba(0,0,0,.5) 89%, transparent 100%);
+            mask-image: linear-gradient(to bottom,
+      transparent 0%, rgba(0,0,0,.55) 12%, #000 24%, #000 77%, rgba(0,0,0,.5) 89%, transparent 100%);
+  }
+
+  /* breathing would fight the centring transform — keep it still */
+  .is-settled .hero__video { animation: none; }
+
+  .hero__parallax { transform: scale(calc(1 + var(--p) * .1)); }
+
+  .hero__grade {
+    background:
+      radial-gradient(120% 52% at 50% 38%,
+        rgba(0,0,0,0) 30%, rgba(0,0,0,.22) 72%, rgba(0,0,0,.6) 100%),
+      linear-gradient(to bottom,
+        rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 18%,
+        rgba(0,0,0,0) 52%, rgba(2,6,14,.5) 100%);
+  }
+
+  .hero__grade::before {
+    background: radial-gradient(58% 26% at 50% 38%, var(--blue-air), transparent 70%);
+    animation-duration: 64s;
+  }
+
+  .hero__media { filter: blur(11px); }
+
+  .hero__tagline {
+    letter-spacing: .34em;
+    text-indent: .34em;
+    max-width: 30ch;
+    font-size: 10px;
+  }
+
+}
+
+/* very short landscape (phone on its side) — pull the title in */
+@media (max-height: 460px) and (min-aspect-ratio: 1/1) {
+  :root { --title-w: clamp(230px, 34vw, 400px); --title-y: 42%; }
+  .hero__tagline { margin-top: 12px; }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   The scene still plays; the choreography around it stops.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  :root { --par-scene: 0px; --par-type: 0px; }
+
+  .hero__media {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: opacity 400ms linear;
+  }
+
+  .is-revealed .hero__media { transition: opacity 400ms linear; transform: none; filter: none; }
+  .is-settled .hero__video,
+  .hero__grade::before,
+  .hero__grain { animation: none; }
+
+  .hero__parallax { transform: none; }
+
+  .hero__title {
+    transform: none;
+    filter: none;
+    -webkit-mask-image: none;
+            mask-image: none;
+  }
+  .is-lit .hero__title {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: opacity 500ms linear;
+  }
+
+  .hero__tagline { transform: none; filter: none; }
+  .is-tagged .hero__tagline { transform: none; transition: opacity 500ms linear; }
+
+  .is-revealed .curtain { transition: opacity 500ms linear; }
+}
+
+/* ============================================================
+   SCENE ENGINE
+   Every scene after the hero is a tall block with a sticky inner.
+   JS writes one number per scene — --q, 0 → 1 as it passes through
+   the viewport — and every layer inside reads it from there.
+   ============================================================ */
+
+@property --q {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.scene {
+  position: relative;
+  height: 190vh;
+  height: 190svh;
+  background: #000;
+}
+
+.scene__inner {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 0 7vw;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* A caption is not paragraph text. Each line arrives on its own beat,
+   the sentence completes, it holds long enough to actually be read,
+   then it dissolves. Timing is scroll position, not a clock, so the
+   reader sets the pace. */
+.scene__line {
+  --start: calc(.10 + var(--d, 0) * .11);
+  --end:   calc(.42 + var(--d, 0) * .11);
+  --in:    clamp(0, calc((var(--q) - var(--start)) / (var(--end) - var(--start))), 1);
+  --out:   clamp(0, calc((.94 - var(--q)) / .18), 1);
+
+  margin: 0;
+  font-size: clamp(19px, 2.5vw, 40px);
+  font-weight: 250;
+  line-height: 1.58;
+  letter-spacing: .012em;
+  color: rgba(236, 241, 250, .88);
+
+  opacity: calc(var(--in) * var(--out));
+  filter: blur(calc((1 - var(--in)) * 11px + (1 - var(--out)) * 7px));
+  transform: translate3d(0, calc((1 - var(--in)) * 16px), 0);
+}
+
+.scene__line + .scene__line { margin-top: .18em; }
+
+/* the light that carries the caption, breathing with the same progress */
+.scene__inner::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 120%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background: radial-gradient(38% 40% at 50% 50%,
+    rgba(34, 68, 122, .20), rgba(10, 20, 38, .07) 52%, transparent 78%);
+  opacity: calc(clamp(0, calc(var(--q) / .3), 1) * clamp(0, calc((.96 - var(--q)) / .2), 1));
+}
+
+/* ============================================================
+   THE ENDING
+
+   Not a footer. The last page of the film: the picture has gone, the
+   mark resolves out of the dark, one line is said, and the credits
+   settle underneath it.
+
+   Everything here is driven by `--q`, the scroll progress hero.js
+   writes onto every `[data-scene]`. The order is the one §20 asks
+   for — darkness, then the mark, then the line, then the links, then
+   the small print — and each arrives well after the last has landed,
+   because a title card that assembles all at once is a web page.
+   ============================================================ */
+
+.ending {
+  position: relative;
+  height: 200vh;
+  height: 200svh;
+  background: #000;
+}
+
+.ending__inner {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: clamp(22px, 3.4vh, 42px);
+  padding: 0 7vw clamp(64px, 11vh, 128px);
+  text-align: center;
+  overflow: hidden;
+}
+
+/* §14 — the faint remnant of the last chapter's colour. Scene 06
+   releases to black, so this is an afterimage rather than a carried
+   frame: a warm rose haze that is already leaving when the mark
+   arrives, and gone long before the credits. */
+.ending__inner::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 160%;
+  height: 120%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  background:
+    radial-gradient(38% 40% at 50% 50%, rgba(206, 118, 92, .20), transparent 72%),
+    radial-gradient(64% 54% at 50% 62%, rgba(66, 48, 96, .16), transparent 78%);
+  opacity: calc(1 - clamp(0, calc((var(--q) - .10) / .48), 1) * .92);
+}
+
+/* ---------- the mark ----------
+   §15 — the identity, given the room a closing card needs. The same
+   artwork the hero opens on, at about a third of the size: an opening
+   title and a closing one are the same object seen twice, and the
+   second should be the quieter of the two. */
+.ending__mark {
+  margin: 0 0 clamp(4px, 1.4vh, 18px);
+  width: min(38vw, 420px);
+  opacity: clamp(0, calc((var(--q) - .14) / .28), 1);
+  filter: blur(calc((1 - clamp(0, calc((var(--q) - .14) / .28), 1)) * 12px));
+  transform: translate3d(0, calc((1 - clamp(0, calc((var(--q) - .14) / .28), 1)) * 16px), 0);
+  will-change: opacity, filter, transform;
+}
+
+.ending__mark img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ---------- the last line ---------- */
+.ending__line {
+  margin: 0;
+  max-width: 22ch;
+  font-family: var(--mem-serif, Georgia, serif);
+  font-weight: 300;
+  font-size: clamp(17px, 1.5vw + 6px, 30px);
+  line-height: 1.45;
+  letter-spacing: .006em;
+  color: rgba(240, 233, 224, .82);
+  text-wrap: balance;
+  opacity: clamp(0, calc((var(--q) - .30) / .26), 1);
+  filter: blur(calc((1 - clamp(0, calc((var(--q) - .30) / .26), 1)) * 7px));
+  transform: translate3d(0, calc((1 - clamp(0, calc((var(--q) - .30) / .26), 1)) * 12px), 0);
+}
+
+.ending__line:empty { display: none; }
+
+/* ---------- the links ----------
+   §17 — three destinations, set as text. Not a nav bar and not a
+   second set of the hero's controls: the size, the tracking and the
+   spacing are all closer to a credit than to a button. */
+.ending__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(22px, 3.2vw, 48px);
+  margin-top: clamp(6px, 1.6vh, 20px);
+  opacity: clamp(0, calc((var(--q) - .46) / .24), 1);
+}
+
+.ending__links:empty { display: none; }
+
+.ending__links a {
+  position: relative;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: .28em;
+  text-indent: .28em;
+  text-transform: uppercase;
+  color: rgba(236, 241, 250, .58);
+  text-decoration: none;
+  padding-bottom: 6px;
+  transition: color 520ms ease, transform 520ms ease;
+}
+
+/* §18 — a rule that draws itself from the left, a little lift, and
+   nothing else. No glow, no scale, no bounce. */
+.ending__links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 520ms cubic-bezier(.2, .7, .2, 1);
+}
+
+.ending__links a:hover,
+.ending__links a:focus-visible {
+  color: rgba(245, 213, 24, .88);
+  transform: translateY(-2px);
+}
+
+.ending__links a:hover::after,
+.ending__links a:focus-visible::after { transform: scaleX(1); }
+
+/* a destination that is not wired yet reads, but cannot be clicked */
+.ending__links a[data-pending] { cursor: default; }
+.ending__links a[data-pending]:hover { color: rgba(236, 241, 250, .62); transform: none; }
+.ending__links a[data-pending]:hover::after { transform: scaleX(0); }
+
+/* ---------- the small print ----------
+   §19 — at the very bottom of the frame and deliberately small
+   enough that it never competes with the line above it. */
+.ending__note {
+  position: absolute;
+  left: 7vw;
+  right: 7vw;
+  bottom: clamp(22px, 4vh, 46px);
+  margin: 0;
+  font-size: 9.5px;
+  font-weight: 300;
+  letter-spacing: .3em;
+  text-indent: .3em;
+  text-transform: uppercase;
+  color: rgba(236, 241, 250, .30);
+  opacity: clamp(0, calc((var(--q) - .60) / .22), 1);
+}
+
+.ending__note:empty { display: none; }
+
+/* ============================================================
+   PORTRAIT — scenes
+   ============================================================ */
+
+@media (max-aspect-ratio: 1/1) {
+  .scene { height: 175svh; }
+  .scene__line { font-size: clamp(18px, 5.2vw, 27px); line-height: 1.55; }
+  .scene__inner { padding: 0 9vw; }
+
+
+
+  .ending { height: 185svh; }
+  .ending__mark { width: min(72vw, 340px); }
+  .ending__line { font-size: clamp(17px, 4.6vw, 25px); max-width: 18ch; }
+  .ending__links { gap: 20px 26px; }
+  .ending__note { font-size: 9px; letter-spacing: .24em; }
+
+}
+
+/* ============================================================
+   REDUCED MOTION — scenes
+   The captions still arrive and leave with scroll, because that is
+   the reader's own movement, but nothing blurs or slides.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .scene__line {
+    filter: none;
+    transform: none;
+  }
+  .ending__mark {
+    filter: none;
+    transform: none;
+  }
+}
+
+
+/* ============================================================
+   THE INTERFACE LAYER
+   Proportions, spacing and tone are taken from the reference
+   composition (measured, not eyeballed) and re-expressed as
+   viewport-relative values so they hold on a 16:9 plate rather
+   than only at the reference's 3:2.
+   ============================================================ */
+
+/* Every interface element arrives on its own beat. The base state
+   lives here; JS adds .is-in per group so the order is explicit. */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+  filter: blur(5px);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  filter: blur(0px);
+  transition:
+    opacity 1100ms cubic-bezier(.26, 0, .26, 1),
+    filter 1100ms cubic-bezier(.26, 0, .26, 1),
+    transform 1300ms cubic-bezier(.16, .8, .26, 1);
+}
+
+.ui {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  /* leaves with the scene rather than sitting on top of Scene 02 */
+  opacity: calc(1 - var(--p) * 1.7);
+  will-change: opacity;
+  transform: translateZ(0);
+}
+
+.ui a,
+.ui button { pointer-events: auto; }
+
+/* ---------- header ---------- */
+
+.hdr {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(16px, 3.1vh, 34px) clamp(18px, 3.1vw, 48px);
+  padding-top: max(clamp(16px, 3.1vh, 34px), env(safe-area-inset-top));
+}
+
+.hdr__logo {
+  display: block;
+  width: clamp(28px, 2.8vw, 44px);
+  line-height: 0;
+  transition: opacity 400ms ease, transform 600ms cubic-bezier(.16, .8, .26, 1);
+}
+
+.hdr__logo img { width: 100%; height: auto; display: block; }
+.hdr__logo:hover { transform: translateY(-1px); }
+
+.hdr__right {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 4.6vw, 72px);
+}
+
+.hdr__nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2.9vw, 46px);
+}
+
+.hdr__nav a {
+  font-size: clamp(10px, .5vw + 6px, 13px);
+  font-weight: 300;
+  letter-spacing: .24em;
+  text-indent: .24em;
+  text-transform: uppercase;
+  color: var(--ui);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 450ms ease;
+}
+
+.hdr__nav a:hover,
+.hdr__nav a:focus-visible { color: var(--gold); }
+
+/* a nav item with nowhere to go yet still reads, but cannot be clicked */
+.hdr__nav a:not([href]) { cursor: default; opacity: .82; }
+
+/* ---------- the circular menu control ---------- */
+
+.burger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(38px, 3.5vw, 54px);
+  height: clamp(38px, 3.5vw, 54px);
+  padding: 0;
+  border: 1px solid rgba(233, 228, 216, .34);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .12);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 450ms ease, background 450ms ease, transform 500ms cubic-bezier(.16, .8, .26, 1);
+}
+
+.burger:hover,
+.burger:focus-visible {
+  border-color: rgba(244, 201, 98, .7);
+  background: rgba(244, 201, 98, .07);
+}
+
+.burger:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(244, 201, 98, .45); }
+.burger:active { transform: scale(.96); }
+
+.burger span {
+  display: grid;
+  gap: 5px;
+  width: 46%;
+}
+
+.burger i {
+  display: block;
+  height: 1.5px;
+  border-radius: 1px;
+  background: #f1ede2;
+  transition: transform 420ms cubic-bezier(.16, .8, .26, 1), opacity 300ms ease;
+}
+
+.burger[aria-expanded="true"] i:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.burger[aria-expanded="true"] i:nth-child(2) { opacity: 0; }
+.burger[aria-expanded="true"] i:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+.menu {
+  position: absolute;
+  top: calc(100% - clamp(6px, 1vh, 12px));
+  right: clamp(18px, 3.1vw, 48px);
+  min-width: 190px;
+  padding: 18px 24px;
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(233, 228, 216, .12);
+  border-radius: 4px 4px 18px 18px / 4px 4px 22px 22px;
+  background: rgba(6, 9, 16, .72);
+  box-shadow: 0 24px 48px -20px rgba(0, 0, 0, .85);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, -8px, 0);
+  transform-origin: 100% 0;
+  pointer-events: none;
+  transition:
+    opacity 400ms ease,
+    transform 460ms cubic-bezier(.16, .8, .26, 1),
+    visibility 0s linear 400ms;
+}
+
+.menu[hidden] { display: none; }
+.menu.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+  /* the blur is only worth paying for while it is actually open */
+  -webkit-backdrop-filter: blur(18px) saturate(112%);
+          backdrop-filter: blur(18px) saturate(112%);
+  transition:
+    opacity 400ms ease,
+    transform 460ms cubic-bezier(.16, .8, .26, 1),
+    visibility 0s;
+}
+
+.menu a {
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ui-3);
+  text-decoration: none;
+  transition: color 400ms ease;
+}
+
+.menu a:hover,
+.menu a:focus-visible { color: var(--gold); }
+
+/* ---------- side rails ---------- */
+
+.rail {
+  position: absolute;
+  top: 45%;
+  /* `translate`, not `transform` — .reveal owns transform */
+  translate: 0 -50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rail--l {
+  left: clamp(14px, 3vw, 48px);
+  gap: clamp(12px, 1.8vh, 20px);
+}
+
+.rail__text {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: clamp(8px, .38vw + 5px, 10px);
+  font-weight: 300;
+  letter-spacing: .42em;
+  text-transform: uppercase;
+  color: var(--gold-soft);
+  white-space: nowrap;
+}
+
+.rail__text:empty { display: none; }
+
+.rail__line {
+  width: 1px;
+  height: clamp(28px, 6vh, 58px);
+  background: linear-gradient(to bottom,
+    rgba(215, 186, 125, 0), rgba(215, 186, 125, .34), rgba(215, 186, 125, 0));
+}
+
+.rail__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 7px rgba(244, 201, 98, .55);
+}
+
+.rail__dot--dim { background: rgba(190, 183, 179, .34); box-shadow: none; }
+
+.rail--r {
+  right: clamp(12px, 3.1vw, 46px);
+  top: 47%;
+  gap: clamp(9px, 1.5vh, 15px);
+}
+
+.rail--r a {
+  display: grid;
+  place-items: center;
+  width: clamp(26px, 2vw, 32px);
+  height: clamp(26px, 2vw, 32px);
+  color: var(--ui-3);
+  transition: color 420ms ease, transform 500ms cubic-bezier(.16, .8, .26, 1);
+}
+
+.rail--r a:hover,
+.rail--r a:focus-visible { color: var(--gold); transform: translateY(-2px); }
+.rail--r svg { width: clamp(15px, 1.2vw, 19px); height: auto; display: block; }
+
+.rail__sep {
+  width: 1px;
+  height: clamp(12px, 1.8vh, 18px);
+  background: rgba(190, 183, 179, .26);
+}
+
+/* ============================================================
+   BOTTOM CONTROLS
+   ============================================================ */
+
+.foot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(clamp(16px, 4.4vh, 46px), env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 clamp(18px, 3.1vw, 48px);
+}
+
+.foot__sound {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--ui-dim);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 420ms ease;
+}
+
+.foot__sound:hover,
+.foot__sound:focus-visible { color: var(--gold); }
+.foot__sound:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 4px; }
+
+.foot__spk {
+  width: clamp(15px, 1.15vw, 19px);
+  height: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.foot__spk .spk-body { fill: currentColor; stroke-width: 1.2; }
+.foot__spk .spk-wave { opacity: 0; transition: opacity 420ms ease; }
+.is-playing .foot__spk .spk-wave { opacity: .85; }
+.is-playing .foot__spk .spk-wave--2 { opacity: .5; }
+
+.foot__soundLabel {
+  font-size: clamp(8px, .34vw + 5px, 10px);
+  font-weight: 300;
+  letter-spacing: .28em;
+  text-indent: .28em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* small level bars, shared by both bottom controls */
+.lvl { display: flex; align-items: flex-end; gap: 2px; height: 11px; }
+
+.lvl i {
+  width: 2px;
+  height: 100%;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: .55;
+  transform: scaleY(.34);
+  transform-origin: 50% 100%;
+  transition: transform 600ms cubic-bezier(.22, .61, .28, 1);
+}
+
+.lvl i:nth-child(2) { transform: scaleY(.62); }
+.lvl i:nth-child(3) { transform: scaleY(.44); }
+.lvl i:nth-child(4) { transform: scaleY(.76); }
+.lvl i:nth-child(5) { transform: scaleY(.5); }
+
+.is-playing .lvl i { animation: lvlBob 1.1s ease-in-out infinite alternate; }
+.is-playing .lvl i:nth-child(2) { animation-duration: .85s; animation-delay: .12s; }
+.is-playing .lvl i:nth-child(3) { animation-duration: 1.3s; animation-delay: .05s; }
+.is-playing .lvl i:nth-child(4) { animation-duration: .95s; animation-delay: .2s; }
+.is-playing .lvl i:nth-child(5) { animation-duration: 1.15s; animation-delay: .09s; }
+
+@keyframes lvlBob {
+  from { transform: scaleY(.28); }
+  to   { transform: scaleY(1); }
+}
+
+/* ---------- scroll cue ---------- */
+
+.foot__scroll {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(7px, 1.2vh, 13px);
+  padding-bottom: 2px;
+  color: var(--ui-dim);
+  text-decoration: none;
+  transition: color 420ms ease;
+}
+
+.foot__scroll:hover,
+.foot__scroll:focus-visible { color: var(--gold); }
+
+.foot__arrow {
+  width: clamp(11px, .85vw, 15px);
+  height: auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: cueFall 2.9s cubic-bezier(.5, 0, .5, 1) infinite;
+}
+
+@keyframes cueFall {
+  0%, 100% { transform: translateY(-2px); opacity: .55; }
+  45%      { transform: translateY(3px);  opacity: 1; }
+}
+
+.foot__scrollLabel {
+  font-size: clamp(8px, .34vw + 5px, 10px);
+  font-weight: 300;
+  letter-spacing: .3em;
+  text-indent: .3em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   INTERFACE — portrait
+   Recomposed rather than shrunk: the rails step aside, the header
+   keeps only the mark and the control, and the theme stack tightens.
+   ============================================================ */
+
+@media (max-aspect-ratio: 1/1) {
+  .hdr__nav { display: none; }          /* it lives in the menu on a phone */
+  .hdr__right { gap: 0; }
+
+  .rail--l { display: none; }           /* no room beside a full-bleed band */
+  .rail--r {
+    right: clamp(8px, 2.4vw, 16px);
+    top: auto;
+    bottom: 21%;
+    translate: 0 0;
+    gap: 8px;
+  }
+  .rail--r a { width: 28px; height: 28px; }
+
+
+
+
+
+  .foot { bottom: max(14px, env(safe-area-inset-bottom)); padding: 0 16px; }
+  .foot__soundLabel { display: none; }
+  .foot__scrollLabel { font-size: 8px; letter-spacing: .22em; text-indent: .22em; }
+
+  .menu { right: 16px; min-width: 168px; }
+}
+
+/* laptops: the same stack, drawn in so it never reaches the bottom row */
+@media (max-height: 800px) and (min-aspect-ratio: 1/1) {
+  .hero__tagline { margin-top: clamp(10px, 1.6vh, 18px); }
+}
+
+/* very short landscape — drop the rails and tighten everything */
+@media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+  .rail { display: none; }
+  .foot { bottom: 10px; }
+}
+
+/* ============================================================
+   INTERFACE — reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transform: none; filter: none; }
+  .reveal.is-in { transform: none; filter: none; transition: opacity 400ms linear; }
+  .foot__arrow { animation: none; }
+  .is-playing .lvl i { animation: none; }
+  .rail--r a:hover { transform: none; }
+  .menu { transition: opacity 300ms linear; transform: none; }
+}

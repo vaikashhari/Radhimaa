@@ -1,0 +1,424 @@
+/* ============================================================
+   RADHIMAA — SCENE 04 · ABOVE EVERYTHING
+
+   The chapter that opens outward. Scenes 02 and 03 were interiors,
+   warm and enclosed; this one is a crowd in red against open sky,
+   the two of them held in the middle of it, and it ends by
+   dissolving into cloud.
+
+   Measured off the shipped plate:
+
+     T 0.00-0.55   L 113 -> 153   the crowd rising into frame
+     T 0.55-2.10   L 151, R-B -39   the sustained shot, near-static
+     T 2.10-2.85   L 154 -> 210   the dissolve into cloud
+
+   Two things follow from those numbers. It is the first chapter in
+   the building that is **cool** — the plate sits 39 points blue of
+   neutral where Scenes 02 and 03 sat 27 points warm — so the grade
+   works in the other direction: it opens deeper and lifts, rather
+   than opening cool and warming. And the sky measures L 163-185 at
+   activity 0-4, far too bright for cream, so the type is ink again.
+
+   The third thing is the one this chapter is built on. Sampling the
+   plate's own red-minus-blue over time:
+
+     T 0.60   R-B  -5    the crimson crowd fills the lower frame
+     T 1.20   R-B -31
+     T 2.20   R-B -36
+     T 3.20   R-B -38    the crowd has sunk out, the sky owns it
+     T 4.20   R-B -46    dissolving into cloud
+
+   The plate performs the red-to-blue transformation by itself. The
+   butterflies do not impose it — they ride it. Red ones arrive while
+   there is still crimson in frame to belong to, blues take over as
+   the sky takes over, and a third of the reds turn rather than leave.
+   ============================================================ */
+
+/* --mt, --mk, --mo are registered by memory.css and shared on
+   purpose: they mean the same thing in every chapter. */
+@property --kenter { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --kdeep  { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --klift  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --kedge  { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+/* The two halves of the chapter's light, driven from paint() so they
+   cross over at the same q the butterflies do. */
+@property --kwarm  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --kcold  { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+:root {
+  /* sampled from Scene 04's own plate */
+  --sky-pale:  #94c4cb;   /* the sky behind them */
+  --sky-bloom: #abd9db;   /* what the last half-second dissolves into */
+  --sky-ink:   #1d2a30;   /* type on that sky */
+
+  /* sampled off the plate: his shirt, the crowd's turbans, her sari */
+  --sky-rust:  #b8402f;
+  --sky-crim:  #8e1730;
+  --sky-slate: #6b7fa8;
+
+  --sky-run: 660svh;
+}
+
+/* ============================================================
+   THE FRAME
+   ============================================================ */
+
+.sky {
+  position: relative;
+  height: var(--sky-run);
+  background: #000;
+}
+
+.sky__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #000;
+  isolation: isolate;
+  z-index: 0;
+}
+
+.sky__plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: var(--kenter);
+  transform: translate3d(0, 0, 0) scale(calc(1.045 - var(--kenter) * .045));
+  filter: blur(calc((1 - var(--kenter)) * 14px));
+  will-change: opacity, transform, filter;
+}
+
+.sky--in .sky__plate  { will-change: opacity, transform; filter: none; }
+.sky--out .sky__plate { will-change: auto; }
+
+.sky__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* the crowd is the bottom third and the sky is the rest — on a
+     short window the crowd is what can be given up */
+  object-position: 50% 38%;
+  display: block;
+  background: #000;
+}
+
+.sky-live .ui { visibility: hidden; }
+
+/* ============================================================
+   THE GRADE
+   Two layers, and they run the opposite way to Scene 03's. The
+   plate is already bright and cool; what it needs is weight while
+   the crowd is rising, and then permission to bloom.
+   ============================================================ */
+
+.sky__deep,
+.sky__warm,
+.sky__lift,
+.sky__cold,
+.sky__vig,
+.sky__grain,
+.sky__edge,
+.sky__pet,
+.sky__fore { position: absolute; inset: 0; pointer-events: none; }
+
+/* Depth while the crowd comes up: a cool floor under the sky and a
+   little more weight in the corners, so the frame has somewhere to
+   open out of. */
+.sky__deep {
+  z-index: 1;
+  opacity: var(--kdeep);
+  background:
+    linear-gradient(184deg, rgba(24, 52, 72, .34) 0%, rgba(16, 34, 50, .16) 48%,
+      rgba(30, 22, 18, .26) 100%),
+    radial-gradient(104% 84% at 50% 44%, transparent 38%, rgba(12, 26, 38, .34) 100%);
+  mix-blend-mode: soft-light;
+}
+
+.sky__deep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(118% 96% at 50% 46%,
+    rgba(0, 0, 0, .06) 30%, rgba(0, 0, 0, .34) 100%);
+}
+
+/* ---------- the red half of the light ----------
+
+   It sits where the red actually is: the crowd along the bottom of
+   frame, which measures R-B +30 to +78 there, and his shirt in the
+   middle of it at +43 to +79. So this reads as the colour already in
+   the picture getting stronger, not as a wash laid over it — which is
+   the whole difference between a graded frame and a filter. */
+.sky__warm {
+  z-index: 2;
+  opacity: var(--kwarm);
+  background:
+    radial-gradient(82% 44% at 46% 102%,
+      rgba(196, 26, 58, .40), rgba(140, 16, 40, .14) 54%, transparent 84%),
+    radial-gradient(26% 30% at 44% 62%, rgba(226, 58, 74, .20), transparent 76%);
+  mix-blend-mode: soft-light;
+  will-change: opacity;
+}
+
+/* The bloom. The plate climbs to L 210 on its own in its last half
+   second; this only carries it a little further and takes the last of
+   the colour out, so the chapter ends in light rather than in a
+   picture. */
+.sky__lift {
+  z-index: 3;
+  opacity: var(--klift);
+  background:
+    radial-gradient(88% 76% at 50% 46%, rgba(212, 238, 240, .52), rgba(171, 217, 219, .26) 62%, transparent 84%),
+    linear-gradient(180deg, rgba(226, 244, 246, .22), rgba(196, 226, 230, .30));
+  mix-blend-mode: screen;
+}
+
+/* ---------- and the blue half ----------
+
+   Violet rather than blue. The plate's sky is already 46 points blue
+   of neutral, and blue on blue only greys it; a violet cast is what
+   actually reads as the frame turning, and it is where the
+   blue-violet butterflies live. It arrives after the warm layer and
+   ends up owning the frame. */
+.sky__cold {
+  z-index: 4;
+  opacity: var(--kcold);
+  background:
+    radial-gradient(98% 74% at 52% 4%, rgba(84, 92, 224, .30), transparent 74%),
+    linear-gradient(184deg, rgba(104, 84, 226, .18) 0%,
+      rgba(56, 60, 178, .12) 54%, rgba(26, 40, 132, .22) 100%);
+  mix-blend-mode: soft-light;
+  will-change: opacity;
+}
+
+/* ---------- the two canvases ----------
+
+   The typography is sandwiched between them. Far and mid butterflies,
+   the rose petals and the motes draw below the words; the near layer
+   and a few foreground petals draw above. That is the only way one
+   butterfly can pass behind a line and another in front of it in the
+   same frame — see wings.js. */
+.sky__pet  { z-index: 5; display: block; width: 100%; height: 100%; }
+.sky__fore { z-index: 8; display: block; width: 100%; height: 100%; }
+
+.sky__vig {
+  z-index: 6;
+  background:
+    radial-gradient(126% 96% at 50% 46%,
+      rgba(0, 0, 0, 0) 44%, rgba(10, 26, 38, .14) 76%, rgba(8, 22, 34, .40) 100%),
+    linear-gradient(to bottom,
+      rgba(10, 26, 38, .16) 0%, rgba(0, 0, 0, 0) 20%,
+      rgba(0, 0, 0, 0) 70%, rgba(12, 12, 14, .34) 100%);
+}
+
+/* ============================================================
+   THE AIR
+
+   Five DOM butterflies used to live here, sharing Scene 02's SVG and
+   its CSS wingbeat. They are gone: this chapter now wants dozens in
+   three depth layers, in eight colours, on curved paths, and that is
+   a canvas problem rather than a stylesheet one. The species is the
+   same — wings.js draws Scene 02's exact path data — so it still
+   reads as the creature coming back rather than a new decoration.
+
+   See wings.js for the world, and sky.js for what it is cut to.
+   ============================================================ */
+
+/* ============================================================
+   TYPOGRAPHY
+
+   The sky is the negative space and there is a great deal of it —
+   L 163-185 at activity 0-4 across the whole upper quarter. Their
+   heads never rise above y 30%, so the band above that is clear for
+   the entire sustained shot.
+
+   Ink, for the same reason as Scene 02's sea wall: the backdrop is
+   the brightest in the building and nothing pale would hold on it.
+   ============================================================ */
+
+.sky__type {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.sky-open {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 13.5vh;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(9.5px, .8vw, 13px);
+  letter-spacing: .38em;
+  text-transform: uppercase;
+  font-weight: 600;
+  /* Measured 4.0:1 at .78 — on a sky at L 0.43 a transparent ink is
+     simply a pale ink. Subordinate here has to come from scale and
+     letterspacing, not from alpha. .95 measures 7:1. */
+  color: rgba(29, 42, 48, .95);
+}
+
+.sky-main {
+  position: absolute;
+  left: 50%;
+  top: 4.6vh;
+  transform: translateX(-50%);
+  width: min(52vw, 880px);
+  text-align: center;
+}
+
+/* On a sky this bright a screened glow does nothing, so the light
+   behind the words is a soft lift instead — the same answer Scene 02
+   reached over the sea. */
+.sky-main__glow {
+  position: absolute;
+  left: -18%;
+  right: -18%;
+  top: -70%;
+  bottom: -60%;
+  background: radial-gradient(52% 112% at 50% 50%,
+    rgba(233, 246, 248, .60), rgba(212, 236, 240, .26) 48%, transparent 76%);
+  filter: blur(18px);
+  opacity: calc(.28 + var(--mt) * (1 - var(--mt)) * 2.4);
+  pointer-events: none;
+}
+
+.sky-main__h {
+  position: relative;
+  margin: 0;
+  font-family: var(--mem-serif);
+  font-weight: 300;
+  font-size: clamp(22px, 3.0vw, 52px);
+  line-height: 1.18;
+  letter-spacing: .005em;
+  color: var(--sky-ink);
+}
+
+.sky-main__sub {
+  position: relative;
+  margin: 2.1vh 0 0;
+  font-size: clamp(9px, .74vw, 12px);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: rgba(29, 42, 48, .92);
+}
+
+/* ============================================================
+   GRAIN + THE RELEASE
+   ============================================================ */
+
+.sky__grain {
+  inset: -140px;
+  z-index: 9;
+  opacity: .04;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1.1s steps(5) infinite;
+}
+
+/* Every chapter so far has released into darkness. This one does not.
+   The plate blooms to L 210 on its own, and Scene 05's first frame
+   measures L 157 at R-B -49 — the same bright, cool world — so
+   releasing to black here would put a hole between two frames that
+   already belong together. It settles into light instead.
+
+   Until Scene 05 is built there is nothing below this but the black
+   ending, so the very bottom of the runway is a step. That is the
+   join waiting to be made, not a finished edge. */
+.sky__edge {
+  z-index: 10;
+  background: linear-gradient(180deg, #d6ecee 0%, #c6e2e6 100%);
+  opacity: calc(var(--kedge) * .96);
+}
+
+/* ============================================================
+   PORTRAIT
+   The same answer as the other chapters: a 9:16 crop of a wide
+   crowd keeps almost none of it, so the plate is its own encode —
+   the frame as a full-width band inside its own blurred light,
+   landing at 26-54% of the height, with the type below it.
+
+   Below the band the field is a blurred, darkened sky, so the type
+   flips back to cream there — ink would vanish into it.
+   ============================================================ */
+
+@media (max-aspect-ratio: 1/1) {
+  :root { --sky-run: 600svh; }
+
+  .sky__video { object-position: 50% 50%; }
+
+  .sky__vig {
+    background:
+      radial-gradient(120% 74% at 50% 42%,
+        rgba(0, 0, 0, 0) 44%, rgba(10, 26, 38, .12) 76%, rgba(8, 22, 34, .34) 100%),
+      linear-gradient(to bottom,
+        rgba(10, 26, 38, .22) 0%, rgba(10, 26, 38, .04) 18%,
+        rgba(10, 26, 38, 0) 28%, rgba(10, 26, 38, 0) 56%,
+        rgba(10, 18, 24, .72) 84%, rgba(8, 14, 20, .90) 100%);
+  }
+
+  .sky-open {
+    top: auto;
+    bottom: 27svh;
+    font-size: 10px;
+    letter-spacing: .32em;
+    color: rgba(232, 243, 245, .82);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .7);
+  }
+
+  .sky-main {
+    left: 8vw;
+    right: 8vw;
+    top: auto;
+    bottom: 13svh;
+    width: auto;
+    transform: none;
+    text-align: left;
+  }
+
+  /* This line is 36 characters and will not fit on one at 390px, so it
+     is allowed to break — but "us." alone on the second line is not a
+     break worth having. balance splits it evenly instead. */
+  .sky-main__h {
+    font-size: clamp(20px, 6.0vw, 34px);
+    line-height: 1.2;
+    text-wrap: balance;
+    color: #eef6f7;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, .55);
+  }
+
+  .sky-main__sub {
+    margin-top: 2.2svh;
+    font-size: 9.5px;
+    letter-spacing: .3em;
+    color: rgba(232, 243, 245, .84);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  }
+
+  .sky-main__glow { display: none; }
+}
+
+/* short landscape */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .sky-open   { top: 15vh; }
+  .sky-main   { top: 3.4vh; width: min(62vw, 760px); }
+  .sky-main__h { font-size: clamp(18px, 2.4vw, 34px); }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .sky__plate { filter: none !important; transform: none !important; }
+  .sky__grain { display: none; }
+  .sky-main__glow { display: none; }
+}

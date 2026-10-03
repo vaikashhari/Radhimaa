@@ -1,0 +1,718 @@
+/* ============================================================
+   RADHIMAA — SCENE 02 · THE MEMORY
+
+   A scroll-controlled plate. The section pins to the viewport and
+   the scrollbar becomes the transport: forwards runs the film,
+   backwards rewinds it, stopping stops it.
+
+   Everything here lives INSIDE the frame. There is no container,
+   no card and no page background around it — the viewport is the
+   film frame, and the typography, flowers, petals and butterflies
+   are lit by the same scene.
+
+   Placement is measured, not eyeballed. A 24x14 luminance +
+   temporal-activity map over each shot of the plate found the
+   quiet regions; every element below sits in one of them. See
+   README, "Where Scene 02's typography is allowed to go".
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Written every frame by memory.js.
+
+   Same lesson as the hero: an *inheriting* custom property
+   invalidates style for its whole subtree, so anything full-bleed
+   is registered `inherits: false` and written straight onto the
+   single element that reads it. The two that do inherit (--mt,
+   --mk) are only ever set on 2-3 node subtrees, where the
+   invalidation is the point and costs nothing.
+   ------------------------------------------------------------ */
+@property --mt     { syntax: '<number>'; inherits: true;  initial-value: 0; }
+@property --mk     { syntax: '<number>'; inherits: true;  initial-value: 0; }
+@property --mo     { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --menter { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --mwarm  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --mcool  { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --mbloom { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --medge  { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+:root {
+  /* Sampled from Scene 02's own plate, not chosen from taste.
+     The flare's edge lands on #fed165 — within a hair of the
+     hero's --gold, which is why the two chapters agree. */
+  --mem-gold:    #fed165;   /* the light leak at 8.3s */
+  --mem-amber:   #e0a15c;
+  --mem-petal:   #b47649;   /* the petals actually falling in-shot */
+  --mem-petal-2: #d3ab7b;
+  --mem-terra:   #8a5230;
+  --mem-cream:   #f3e5d0;   /* her jasmine, lifted to type weight */
+  --mem-ivory:   #cbae8b;
+  --mem-mint:    #d0eee2;   /* the sky over the sea wall */
+  --mem-ink:     #232a25;   /* type on that sky */
+  --mem-night:   #0b0f18;
+  --mem-blue:    #2c4a86;   /* the hero's blue air, carried in and burnt off */
+
+  --mem-run: 700svh;        /* the scroll runway */
+
+  --mem-serif: "Cormorant Garamond", "Cormorant", Didot, "Bodoni MT",
+               "Iowan Old Style", Garamond, Georgia, "Times New Roman", serif;
+}
+
+/* Scene 01's interface layer is fixed and fades to nothing by --p 0.588,
+   but opacity alone leaves the logo, the menu, the play disc, both sound
+   controls and the scroll cue invisibly clickable — floating over Scene
+   02 and able to throw the reader back to the top of the page on a stray
+   click. While the memory is on screen it is taken out of the document
+   entirely, and comes back the moment the reader leaves. */
+.mem-live .ui {
+  visibility: hidden;
+}
+
+/* ============================================================
+   THE FRAME
+   ============================================================ */
+
+.mem {
+  position: relative;
+  height: var(--mem-run);
+  background: #000;
+}
+
+.mem__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #000;
+  isolation: isolate;
+  z-index: 0;             /* stays under the hero's fixed interface layer */
+}
+
+/* ---------- the plate ---------- */
+
+.mem__plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: var(--menter);
+  transform: translate3d(0, 0, 0) scale(calc(1.075 - var(--menter) * .075));
+  filter: blur(calc((1 - var(--menter)) * 20px));
+  will-change: opacity, transform, filter;
+}
+
+/* Once the memory has surfaced, stop paying for the filter and the
+   compositor hints — nothing writes --menter again until it leaves. */
+.mem--in .mem__plate  { will-change: opacity, transform; filter: none; }
+.mem--out .mem__plate { will-change: auto; }
+
+.mem__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Slightly high: on a short, wide window the faces are in the upper
+     half of every shot, and dead-centre cropping takes them first. */
+  object-position: 50% 44%;
+  display: block;
+  background: #000;
+}
+
+/* ============================================================
+   COLOUR — tied to the scroll, never a flat blanket
+
+   The plate's own arc is dark-amber -> gold -> a blown-out light
+   leak -> pale mint. These two layers only bend it: the hero's
+   blue night hangs over the opening and burns off as the couple
+   arrives, and the warmth swells to the leak and then softens.
+   ============================================================ */
+
+.mem__cool,
+.mem__warm,
+.mem__bloom,
+.mem__vig,
+.mem__grain,
+.mem__edge,
+.mem__air { position: absolute; inset: 0; pointer-events: none; }
+
+.mem__cool {
+  z-index: 1;
+  opacity: var(--mcool);
+  background:
+    linear-gradient(180deg,
+      rgba(16, 26, 52, .58) 0%,
+      rgba(22, 30, 56, .30) 46%,
+      rgba(10, 14, 30, .52) 100%),
+    radial-gradient(88% 70% at 44% 38%, rgba(44, 74, 134, .34), transparent 72%);
+  mix-blend-mode: soft-light;
+}
+
+/* the "darker" half of §12's opening — kept off the blend stack */
+.mem__cool::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 96% at 50% 46%,
+    rgba(0, 0, 0, .10) 30%, rgba(0, 0, 0, .46) 100%);
+}
+
+.mem__warm {
+  z-index: 2;
+  opacity: var(--mwarm);
+  background:
+    radial-gradient(74% 62% at 30% 34%, rgba(254, 209, 101, .30), transparent 70%),
+    radial-gradient(66% 58% at 72% 66%, rgba(224, 161, 92, .22), transparent 72%),
+    linear-gradient(190deg, rgba(255, 214, 140, .12), rgba(138, 82, 48, .16));
+  mix-blend-mode: soft-light;
+}
+
+/* The real light leak arrives from frame-left at 7.6s and has crossed
+   to frame-right by 8.7s, so this is centre-weighted rather than
+   anchored: a left-anchored gold flare was on the wrong side of the
+   picture for half of the transition. Warm white, not gold — a bloom
+   washes towards white, and screening more gold onto an already
+   blown-out plate only made it read as flat acid yellow. */
+.mem__bloom {
+  z-index: 3;
+  opacity: var(--mbloom);
+  background:
+    radial-gradient(80% 132% at 50% 50%, rgba(255, 248, 234, .30), transparent 72%),
+    radial-gradient(46% 92% at 4% 48%, rgba(255, 238, 202, .22), transparent 70%);
+  mix-blend-mode: screen;
+}
+
+/* Static, like the hero's. Vignette and spill, never a flat overlay. */
+.mem__vig {
+  z-index: 4;
+  background:
+    radial-gradient(126% 92% at 50% 44%,
+      rgba(0, 0, 0, 0) 36%, rgba(0, 0, 0, .22) 72%, rgba(0, 0, 0, .62) 100%),
+    linear-gradient(to bottom,
+      rgba(0, 0, 0, .34) 0%, rgba(0, 0, 0, 0) 20%,
+      rgba(0, 0, 0, 0) 62%, rgba(6, 5, 4, .48) 100%);
+}
+
+/* ============================================================
+   THE AIR
+   Petals, dust, blossoms, two butterflies and one heart. Every
+   one of them animates transform and opacity only, so the whole
+   layer is the compositor's problem and never the main thread's.
+   Scroll drives the group; time drives the drift.
+   ============================================================ */
+
+.mem__air { z-index: 5; }
+
+.air {
+  position: absolute;
+  inset: 0;
+  opacity: var(--mo);
+}
+
+/* ---------- petals ----------
+   The plate already has petals falling through the embrace. These
+   extend that fall past the edges of frame; they are terracotta
+   and amber because the real ones are (#b47649 / #d3ab7b), not
+   pink. Three depths, so the near ones read as defocused bokeh. */
+
+.petal {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  will-change: transform;
+  animation: petalFall var(--dur) linear var(--delay) infinite;
+}
+
+.petal__i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 62% 38% 55% 45% / 68% 62% 38% 32%;
+  background:
+    radial-gradient(closest-side at 38% 34%,
+      var(--c1) 0%, var(--c2) 62%, rgba(138, 82, 48, 0) 100%);
+  opacity: var(--op);
+  filter: blur(var(--soft));
+  will-change: transform;
+  animation: petalSway var(--sway) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes petalFall {
+  from { transform: translate3d(0, -14vh, 0); }
+  to   { transform: translate3d(var(--drift), 118vh, 0); }
+}
+
+@keyframes petalSway {
+  from { transform: translate3d(-2.2vw, 0, 0) rotate(-24deg); }
+  to   { transform: translate3d( 2.2vw, 0, 0) rotate( 38deg); }
+}
+
+/* ---------- dust ----------
+   Warm motes in the lamp light. Small, few, and never sparkling. */
+
+.dust {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--w);
+  border-radius: 50%;
+  background: radial-gradient(closest-side,
+    rgba(255, 232, 178, .95), rgba(254, 209, 101, .34) 58%, transparent 100%);
+  opacity: var(--op);
+  filter: blur(var(--soft));
+  will-change: transform, opacity;
+  animation: dustDrift var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes dustDrift {
+  from { transform: translate3d(0, 0, 0) scale(.86);          opacity: .18; }
+  to   { transform: translate3d(var(--dx), var(--dy), 0) scale(1.1); opacity: 1; }
+}
+
+/* ---------- jasmine ----------
+   She is wearing one. These are the same flower, drifting loose in
+   the room — three of them, and never in the middle of the frame. */
+
+.bloom {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--w);
+  opacity: var(--op);
+  filter: blur(var(--soft)) drop-shadow(0 0 10px rgba(255, 226, 170, .35));
+  will-change: transform;
+  animation: bloomDrift var(--dur) ease-in-out var(--delay) infinite alternate;
+}
+
+.bloom svg { display: block; width: 100%; height: 100%; }
+
+@keyframes bloomDrift {
+  from { transform: translate3d(-.7vw, .5vh, 0) rotate(-7deg)  scale(.95); }
+  to   { transform: translate3d( .7vw, -.9vh, 0) rotate(  9deg) scale(1.04); }
+}
+
+/* ---------- the heart ----------
+   §10: one, tiny, inside the dust, gone before you are sure. It is a
+   light, not a symbol — no outline, no fill, just a warm shape that
+   drifts up and out. */
+
+.heart {
+  position: absolute;
+  left: 76%;
+  top: 30%;
+  width: 20px;
+  height: 18px;
+  opacity: var(--mo);
+  will-change: transform;
+  animation: heartDrift 9s ease-in-out infinite alternate;
+}
+
+/* The softening goes on the composed shape, not on each half. Blurring
+   the two lobes separately left two specks with nothing between them,
+   which is not a symbol — it is noise. */
+.heart__i {
+  position: absolute;
+  inset: 0;
+  filter: blur(1.3px) drop-shadow(0 0 5px rgba(255, 214, 150, .42));
+}
+
+.heart__i::before,
+.heart__i::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 80%;
+  border-radius: 50% 50% 0 0;
+  background: linear-gradient(200deg,
+    rgba(255, 240, 206, .95), rgba(254, 209, 101, .72));
+}
+
+.heart__i::before { left: 50%; transform: rotate(-45deg); transform-origin: 0 100%; }
+.heart__i::after  { left: 0;   transform: rotate( 45deg); transform-origin: 100% 100%; }
+
+@keyframes heartDrift {
+  from { transform: translate3d(0, 0, 0) scale(.9); }
+  to   { transform: translate3d(2.4vw, -9vh, 0) scale(1.08); }
+}
+
+/* ---------- butterflies ----------
+   Two, in twelve seconds. Scroll carries them across the frame;
+   only the wingbeat runs on a clock. The X is linear and the Y is
+   quadratic, so the flight arcs instead of sliding. */
+
+.fly {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  opacity: var(--mo);
+  transform: translate3d(calc(var(--mk) * var(--dx)), 0, 0);
+}
+
+.fly__y {
+  display: block;
+  transform: translate3d(0,
+    calc(var(--mk) * var(--dy) + var(--mk) * var(--mk) * var(--arc)), 0);
+}
+
+.fly__b {
+  display: block;
+  will-change: transform;
+  animation: flyBob 3.4s ease-in-out infinite alternate;
+}
+
+.fly__svg { display: block; width: 100%; height: auto; }
+
+.fly__w {
+  transform-origin: 30px 22px;
+  will-change: transform;
+  animation: flutter .58s ease-in-out infinite alternate;
+}
+
+/* Lit by the scene rather than drawn on top of it: warm cream, soft
+   enough at the edge to be part of the same depth of field, and with a
+   little of the room's glow caught on it. */
+.fly--1 .fly__svg {
+  fill: rgba(248,235,212,.74);
+  filter: blur(1.1px) drop-shadow(0 0 6px rgba(255, 214, 150, .26));
+}
+.fly--1 .fly__body { fill: rgba(120,72,42,.8); }
+
+/* Over a pale sky a light butterfly is invisible; this one reads the
+   way something distant does, as a warm dark shape. */
+.fly--2 .fly__svg { fill: rgba(58,56,44,.72); filter: blur(.8px); }
+.fly--2 .fly__body { fill: rgba(38,37,30,.85); }
+
+/* Shallow on purpose. Closing the wings to a third of their width made
+   it read as a bowtie for most of the crossing — which is most of what
+   a reader ever sees of it. */
+@keyframes flutter {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(.62); }
+}
+
+@keyframes flyBob {
+  from { transform: translate3d(0, -1.1vh, 0) rotate(-5deg); }
+  to   { transform: translate3d(0,  1.4vh, 0) rotate( 6deg); }
+}
+
+/* ============================================================
+   TYPOGRAPHY
+   One display face and the interface's own sans. Nothing else.
+
+   Desktop placement comes off the activity map:
+     the embrace  — bottom-left is the darkest, stillest ground in
+                    the shot (mean L 15-45, activity 2-14) and is
+                    nowhere near either face;
+     the sea wall — the sky reads L 203-220 at activity 0-2, so the
+                    closing line is set in ink instead of cream. It
+                    is the one place in the film where light type
+                    could not hold, and the footage is right.
+   ============================================================ */
+
+.mem__type {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+/* the reveal, shared by every line —
+   §04: almost invisible, soft blur, a small central glow, letters
+   emerging outward from the middle of the line, then sharp. The
+   mask does the emerging; a blurred ghost of the same line does the
+   glow. Both are opacity and mask work, so neither costs layout. */
+
+.ln {
+  position: relative;
+  display: block;
+}
+
+.ln::before {
+  content: attr(data-line);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  filter: blur(11px);
+  opacity: calc(var(--mt) * (1 - var(--mt)) * 2.7);
+  pointer-events: none;
+}
+
+.ln__in {
+  display: block;
+  opacity: calc((var(--mt) - .14) * 1.45);
+  -webkit-mask-image: radial-gradient(120% 300% at 50% 50%,
+    #000 calc(var(--mt) * 108% - 30%), transparent calc(var(--mt) * 108% + 2%));
+          mask-image: radial-gradient(120% 300% at 50% 50%,
+    #000 calc(var(--mt) * 108% - 30%), transparent calc(var(--mt) * 108% + 2%));
+  -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+}
+
+/* ---------- the eyebrow, over the crowd ---------- */
+
+.mem-eyebrow {
+  position: absolute;
+  left: 7vw;
+  bottom: 15vh;
+  margin: 0;
+  max-width: 46vw;
+  font-size: clamp(9.5px, .8vw, 13px);
+  letter-spacing: .38em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--mem-ivory);
+  /* Measured: the backdrop under this line is L 8-30 for four fifths of
+     its length and then jumps to 98 where the tail crosses a white
+     dhoti in the crowd — 2.76:1 at 10px. A tight shadow hugging the
+     letterforms buys that back without putting a panel on the film,
+     which is the same conclusion Scene 01's title reached. */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, .85),
+    0 0 12px rgba(0, 0, 0, .70),
+    0 0 30px rgba(0, 0, 0, .45);
+}
+
+/* ---------- the quiet line, over the embrace ----------
+   Small on purpose. The embrace is the warmest footage in the film but
+   it is a tight two-shot with no clean ground: the measured quiet zone
+   is the bottom-left (L 15-45 at activity 2-14) and nothing larger fits
+   there without crossing a face. So this beat carries one line, and the
+   weight goes to the shot that has room for it. */
+
+.mem-aside {
+  position: absolute;
+  left: 7vw;
+  bottom: 14vh;
+  margin: 0;
+  max-width: 46vw;
+  font-family: var(--mem-serif);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(19px, 2.35vw, 42px);
+  line-height: 1.2;
+  color: var(--mem-cream);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, .52),
+    0 2px 26px rgba(0, 0, 0, .55),
+    0 0 84px rgba(0, 0, 0, .35);
+}
+
+/* ---------- the main love text, on the two of them sitting ----------
+   This is the centrepiece, and it is here rather than on the embrace
+   because this is the shot with somewhere to put it: the sky measures
+   L 203-220 at activity 0-2 across cols 0-17 — the largest, quietest
+   area in the whole film — and it sits directly above them without
+   touching either face at any point of the push-in.
+
+   Centred, because it has to arrive from the middle of the scene rather
+   than off an edge. Ink, because nothing pale survives on that sky. */
+
+.mem-main {
+  position: absolute;
+  left: 50%;
+  top: 5.5vh;
+  transform: translateX(-50%);
+  width: min(54vw, 900px);
+  text-align: center;
+}
+
+/* The glow §04 asks for. Over the embrace this was a warm screen-blended
+   bloom; on a sky that already reads L 215 screening does nothing, so it
+   is a soft lift instead — it lands the ink on warm paper while the
+   letters are arriving and is gone by the time they are sharp. */
+.mem-main__glow {
+  position: absolute;
+  left: -16%;
+  right: -16%;
+  top: -60%;
+  bottom: -55%;
+  background: radial-gradient(52% 116% at 50% 50%,
+    rgba(255, 253, 247, .70), rgba(255, 250, 238, .30) 48%, transparent 74%);
+  filter: blur(14px);
+  opacity: calc(.34 + var(--mt) * (1 - var(--mt)) * 2.2);
+  pointer-events: none;
+}
+
+.mem-main__h {
+  position: relative;
+  margin: 0;
+  font-family: var(--mem-serif);
+  font-weight: 300;
+  font-size: clamp(23px, 3.1vw, 54px);
+  line-height: 1.2;
+  letter-spacing: .004em;
+  color: var(--mem-ink);
+}
+
+.mem-main__h .ln--it {
+  font-style: italic;
+  font-weight: 300;
+}
+
+.mem-main__sub {
+  position: relative;
+  margin: 2.4vh 0 0;
+  font-size: clamp(9px, .76vw, 12px);
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  font-weight: 600;
+  /* .62 composited to 3.8:1 on an L 215 sky — under the 4.5:1 a 10px
+     line needs. .78 measures 5.8:1 and still reads as the quiet one. */
+  color: rgba(35, 42, 37, .78);
+}
+
+/* ============================================================
+   GRAIN + THE RELEASE
+   ============================================================ */
+
+/* Same plate treatment as Scene 01 — the two chapters have to be
+   the same film. Keyframes `grain` live in hero.css. */
+.mem__grain {
+  inset: -140px;
+  z-index: 7;
+  opacity: .05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1.1s steps(5) infinite;
+}
+
+/* §18: the last frame is held, then the memory dissolves into the
+   darkness the next chapter opens in. */
+.mem__edge {
+  z-index: 8;
+  background: #000;
+  opacity: calc(var(--medge) * .97);
+}
+
+/* ============================================================
+   PORTRAIT — a composition of its own
+
+   The plate is a different encode, not the desktop one shrunk: the
+   film sits as a full-width band inside its own blurred, darkened
+   light, so both faces survive at every moment. A 9:16 crop of this
+   footage cannot hold two people in the embrace — it keeps him and
+   loses her — so it is not attempted.
+
+   The band lands at 25.7%-63.2% of the viewport height. Everything
+   below is type; nothing is allowed on top of the band.
+   ============================================================ */
+
+@media (max-aspect-ratio: 1/1) {
+  :root { --mem-run: 620svh; }
+
+  .mem__video { object-position: 50% 50%; }
+
+  /* The lower field carries all of the portrait typography, so it is
+     brought down far enough that cream holds over it in every shot.
+     The upper field is left much lighter — the surround is the plate's
+     own light, and crushing it turns the composition back into the
+     letterbox it exists to avoid. The eyebrow is the only thing up
+     there and it carries its own shadow. */
+  .mem__vig {
+    background:
+      radial-gradient(120% 74% at 50% 44%,
+        rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, .16) 76%, rgba(0, 0, 0, .42) 100%),
+      linear-gradient(to bottom,
+        rgba(4, 6, 12, .30) 0%, rgba(4, 6, 12, .06) 18%,
+        rgba(4, 6, 12, 0) 30%, rgba(4, 6, 12, 0) 58%,
+        rgba(8, 7, 6, .72) 84%, rgba(8, 7, 6, .90) 100%);
+  }
+
+  .mem-eyebrow {
+    left: 8vw;
+    right: 8vw;
+    bottom: auto;
+    top: 12.5svh;
+    max-width: none;
+    letter-spacing: .32em;
+    font-size: 10px;
+  }
+
+  /* Ink on a blurred bright sky does not hold on a phone, and there is
+     no clean sky to sit in anyway once the picture is a band. So both
+     text beats come down into the dark field below it, in cream, and
+     share one anchor — they are never on screen at the same time. */
+  .mem-aside,
+  .mem-main {
+    left: 8vw;
+    right: 8vw;
+    top: auto;
+    bottom: 14svh;
+    width: auto;
+    max-width: none;
+    transform: none;
+    text-align: left;
+  }
+
+  .mem-aside {
+    font-size: clamp(20px, 6.2vw, 34px);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, .6);
+  }
+
+  /* 7.6vw broke "Loving her was mostly this —" across two lines on a
+     390px phone and stranded the em-dash on its own. Measured: the longer
+     of the two lines needs 6.3vw to sit inside 84vw of container. */
+  .mem-main__h {
+    font-size: clamp(21px, 6.3vw, 36px);
+    line-height: 1.2;
+    color: var(--mem-cream);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, .6);
+  }
+
+  .mem-main__sub {
+    margin-top: 2.4svh;
+    font-size: 9.5px;
+    letter-spacing: .3em;
+    color: rgba(243, 229, 208, .88);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .85), 0 0 14px rgba(0, 0, 0, .7);
+  }
+
+  .mem-main__glow { display: none; }
+
+  /* fewer of everything, and out of the band */
+  .fly--2 .fly__svg { fill: var(--mem-cream); opacity: .5; }
+}
+
+/* short landscape — phones on their side, small laptops */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .mem-eyebrow { bottom: 11vh; }
+  .mem-aside   { bottom: 10vh; max-width: 52vw; font-size: clamp(17px, 2vw, 28px); }
+  .mem-main    { top: 4vh; width: min(62vw, 780px); }
+  .mem-main__h { font-size: clamp(19px, 2.4vw, 34px); }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   The film still runs — it is the content, and it only moves when
+   the reader moves. What stops is everything autonomous: drift,
+   flutter, grain, and every blur that resolves.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .mem__plate {
+    filter: none !important;
+    transform: none !important;
+  }
+
+  .mem__grain { display: none; }
+
+  .petal, .petal__i, .dust, .bloom, .heart, .fly__b, .fly__w {
+    animation: none !important;
+  }
+
+  .ln::before { display: none; }
+
+  .ln__in {
+    -webkit-mask-image: none;
+            mask-image: none;
+    opacity: var(--mt);
+  }
+
+  .mem-main__glow { display: none; }
+}

@@ -1,0 +1,421 @@
+/* ============================================================
+   RADHIMAA — SCENE 05 · THE NIGHT IT RAINED
+
+   Night, rain, and a wall of bokeh. The most dynamic plate in the
+   building and the one that needs the least help — it opens in the
+   same pale mist Scene 04 dissolves into, falls all the way to
+   L 36, swings through a bokeh swirl and blooms out warm.
+
+   Measured off the shipped plate:
+
+     T 0.00-0.70   L 164 -> 67, R-B -52 -> -8   the mist clearing
+     T 0.70-1.26   L 67 -> 36                    settling into the dark
+     T 1.26-2.94   L 36, R-B -3 -> -20           the night, dancing
+     T 2.94-4.10   L 35 -> 87, R-B -> -56        the bokeh swirl
+     T 4.10-4.38   L 87 -> 173, R-B -> **+61**   the warm bloom
+
+   That last number is the point of the chapter: it is the first
+   plate that ends warm since Scene 03, and it turns 117 points of
+   colour temperature to get there. Nothing here needs to add a
+   thing to that — the grade only deepens the night a little and
+   lets the bloom through.
+   ============================================================ */
+
+@property --renter { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --rnight { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --rbloom { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --redge  { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+/* How lit the night is by the lights that have woken in it. Drives the
+   ambient layer and, through it, the warmth the typography is read by. */
+@property --rlit   { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+:root {
+  /* sampled from Scene 05's own plate */
+  --rain-mist:  #8290ae;   /* the opening, and Scene 04's last frame */
+  --rain-bokeh: #9ec5ca;   /* the lights behind them */
+  --rain-plum:  #432135;   /* the wall the type sits on */
+  --rain-bloom: #d8a79f;   /* what the last half-second turns into */
+  --rain-cream: #f4ecdf;
+
+  --rain-run: 680svh;
+}
+
+/* ============================================================
+   THE FRAME
+   ============================================================ */
+
+/* Not black, and this matters.
+
+   A chapter's plate fades up from its frame's background while
+   --renter climbs, so that background is what the reader actually
+   sees at the boundary. Every chapter up to Scene 03 released into
+   black and arrived over black, which hid it. Scene 04 releases into
+   pale light — so a black ground here put a flash of black between
+   two frames that were supposed to dissolve into each other.
+
+   This is the colour Scene 04 hands over on, and Scene 05's own first
+   frame is pale mist at L 164, so the fade-up has nothing to cross. */
+.rain {
+  position: relative;
+  height: var(--rain-run);
+  background: #cfe4e6;
+}
+
+.rain__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #cfe4e6;
+  isolation: isolate;
+  z-index: 0;
+}
+
+.rain__plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: var(--renter);
+  transform: translate3d(0, 0, 0) scale(calc(1.04 - var(--renter) * .04));
+  filter: blur(calc((1 - var(--renter)) * 14px));
+  will-change: opacity, transform, filter;
+}
+
+.rain--in .rain__plate  { will-change: opacity, transform; filter: none; }
+.rain--out .rain__plate { will-change: auto; }
+
+.rain__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* the bokeh is the top third and their faces sit just under it */
+  object-position: 50% 42%;
+  display: block;
+  background: #000;
+}
+
+.rain-live .ui { visibility: hidden; }
+
+/* ============================================================
+   THE GRADE
+   Two layers, both nearly weightless. This plate already travels
+   117 points of colour temperature by itself; the job here is to
+   stay out of its way and give the night a little more depth.
+   ============================================================ */
+
+.rain__night,
+.rain__lit,
+.rain__bloom,
+.rain__vig,
+.rain__grain,
+.rain__edge,
+.rain__lite,
+.rain__fore { position: absolute; inset: 0; pointer-events: none; }
+
+/* Violet in the shadows, which is where the bokeh already puts it. */
+.rain__night {
+  z-index: 1;
+  opacity: var(--rnight);
+  background:
+    linear-gradient(178deg, rgba(38, 34, 68, .30) 0%, rgba(20, 18, 40, .38) 100%),
+    radial-gradient(84% 62% at 46% 22%, rgba(110, 132, 190, .18), transparent 72%);
+  mix-blend-mode: soft-light;
+}
+
+.rain__night::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 96% at 46% 44%,
+    rgba(0, 0, 0, .10) 32%, rgba(0, 0, 0, .40) 100%);
+}
+
+/* ---------- the night lit by its own lights ----------
+
+   §05 asks for the lights to illuminate the atmosphere rather than
+   merely sit in front of it, so this comes up with them. Both glows
+   are anchored to where the plate's real light already is — the
+   blue-white cluster measured at x 20-70% / y 0-20%, and the warm
+   amber points at x 55-80% / y 20-60%. Screened, which is the right
+   blend here and was the wrong one in Scene 04: that chapter's ground
+   is a sky at L 170 and this one is a night at L 36. */
+.rain__lit {
+  z-index: 2;
+  opacity: var(--rlit);
+  background:
+    radial-gradient(70% 46% at 44% 16%, rgba(150, 178, 255, .17), transparent 74%),
+    radial-gradient(40% 34% at 70% 52%, rgba(255, 196, 120, .13), transparent 76%),
+    linear-gradient(184deg, rgba(122, 118, 196, .06), rgba(44, 38, 84, .10));
+  mix-blend-mode: screen;
+  will-change: opacity;
+}
+
+/* ---------- the lights ----------
+   Two canvases with the typography between them, the same
+   arrangement Scene 04 uses: the distant and firefly layers draw
+   below the words and the foreground bokeh above, so a light can
+   pass behind a line and another in front of it in one frame.
+   See lumen.js. */
+.rain__lite { z-index: 3; display: block; width: 100%; height: 100%; }
+.rain__fore { z-index: 7; display: block; width: 100%; height: 100%; }
+
+/* The bloom the plate makes for itself, carried a half-step further
+   and no more. */
+.rain__bloom {
+  z-index: 4;
+  opacity: var(--rbloom);
+  background:
+    radial-gradient(84% 74% at 50% 52%, rgba(216, 167, 159, .34), transparent 78%),
+    linear-gradient(184deg, rgba(232, 190, 172, .16), rgba(196, 138, 132, .20));
+  mix-blend-mode: screen;
+}
+
+.rain__vig {
+  z-index: 5;
+  background:
+    radial-gradient(124% 96% at 48% 46%,
+      rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, .20) 76%, rgba(0, 0, 0, .54) 100%),
+    linear-gradient(to bottom,
+      rgba(0, 0, 0, .26) 0%, rgba(0, 0, 0, 0) 22%,
+      rgba(0, 0, 0, 0) 68%, rgba(6, 6, 10, .40) 100%);
+}
+
+/* ============================================================
+   THE AIR
+
+   Nine soft DOM points used to extend the plate's own bokeh here.
+   They are gone: this chapter is now about lights waking up one at a
+   time in three depth layers, with a birth envelope on each, and that
+   is a canvas problem rather than a stylesheet one.
+
+   The old note is still worth keeping, because it still governs the
+   design: the plate already has rain and a wall of out-of-focus
+   lights, and adding weather to weather is the one thing this
+   chapter cannot afford. What is added is light, not more weather.
+
+   See lumen.js for the world and rain.js for what it is cut to.
+   ============================================================ */
+
+/* ============================================================
+   TYPOGRAPHY
+
+   This frame has no bright negative space and no dark one either —
+   the whole lower two thirds measures L 0-20, but most of that is
+   *them*. He is at x 8-38%, she at x 33-56%, and their silhouettes
+   run to the bottom of frame.
+
+   What is actually empty is the right third: a plum wall at
+   L 26-57 with rain across it, cols 14-23, activity 3-16. So the
+   type sits there, in a column beside them, and cream measures
+   better against it than against anything else in the building.
+   ============================================================ */
+
+.rain__type {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.rain-open {
+  position: absolute;
+  left: 62vw;
+  right: 5vw;
+  top: 34vh;
+  margin: 0;
+  font-size: clamp(9.5px, .8vw, 13px);
+  letter-spacing: .38em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: rgba(244, 236, 223, .86);
+  /* The eyebrow carries no scrim — it is up while the frame is at its
+     darkest and does not need one on the mean, which measures 11.5:1.
+     What it does need is the tight ring: the worst pixel under it is a
+     rain droplet at 3.18:1, and a 4px dark halo hugging the strokes is
+     what keeps a lit droplet from touching a letterform. */
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, .8),
+    0 0 4px rgba(0, 0, 0, .85),
+    0 0 20px rgba(0, 0, 0, .6);
+}
+
+/* 62vw, not 60: the camera drifts right through this shot and her
+   hair reaches x 56-58% while the line is still arriving. Two more
+   viewport-widths of clearance costs a point of type size and buys
+   the margin back at the one moment it is thin. */
+.rain-main {
+  position: absolute;
+  left: 62vw;
+  right: 5vw;
+  top: 44vh;
+}
+
+/* Every other chapter puts *light* behind its words. This one cannot:
+   the type is cream on a night, and a screened glow brightens the one
+   thing that is already the problem. Measured with the screen version,
+   a bokeh light sitting behind the line took the worst cell to 1.06:1 —
+   a bright lamp directly under cream letters.
+
+   So this is a scrim instead: a soft elliptical falloff, normal blend,
+   present for as long as the line is. Not a panel and not a blanket —
+   the same conclusion Scene 01's title reached about its own worst
+   frame. */
+.rain-main__glow {
+  position: absolute;
+  left: -18%;
+  right: -18%;
+  top: -95%;
+  bottom: -85%;
+  /* Measured, not chosen. With the scrim at .66 the brightest pixel
+     under the first line of the heading came back 126/255 — 2.94:1
+     against the cream, a hair under the 3:1 WCAG asks of large text.
+     The lights are not the cause: the same pixel reads 126 with both
+     canvases switched off and 246 with the scrim off, so it is the
+     plate's own rain and the new line simply sits over a brighter
+     part of it than the old one did. .78 takes the worst cell to
+     4:1 and is invisible on a frame this dark. */
+  background: radial-gradient(62% 122% at 44% 50%,
+    rgba(6, 6, 12, .78), rgba(6, 6, 12, .38) 46%, transparent 78%);
+  filter: blur(24px);
+  opacity: calc(var(--mt) * .94);
+  pointer-events: none;
+}
+
+.rain-main__h {
+  position: relative;
+  margin: 0;
+  font-family: var(--mem-serif);
+  font-weight: 300;
+  font-size: clamp(19px, 2.45vw, 41px);
+  line-height: 1.2;
+  letter-spacing: .005em;
+  color: var(--rain-cream);
+  /* the line runs to two in this column at every width, so the break
+     is balanced rather than left to drop one word onto its own row */
+  text-wrap: balance;
+  /* Tight first, so each stroke keeps separation even where a bokeh
+     light lands directly behind it — then, last, a warm halo that
+     grows with the lights. §11 asks for the type to feel illuminated
+     by them rather than merely placed on top, and a halo *outside*
+     the letterforms does that without touching the ground behind the
+     glyphs, which is where the contrast is actually won. */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, .9),
+    0 0 10px rgba(0, 0, 0, .78),
+    0 2px 30px rgba(0, 0, 0, .55),
+    0 0 calc(16px * var(--rlit)) rgba(255, 216, 164, calc(.30 * var(--rlit)));
+}
+
+.rain-main__sub {
+  position: relative;
+  margin: 2.0vh 0 0;
+  font-size: clamp(9px, .74vw, 12px);
+  letter-spacing: .32em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: rgba(244, 236, 223, .74);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8), 0 0 14px rgba(0, 0, 0, .6);
+}
+
+/* ============================================================
+   GRAIN + THE RELEASE
+   ============================================================ */
+
+.rain__grain {
+  inset: -140px;
+  z-index: 8;
+  opacity: .05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1.1s steps(5) infinite;
+}
+
+/* Like Scene 04, this one does not release into black — it ends in
+   its own warm bloom and settles into that, so Scene 06 has the
+   same colour to open out of. Below it is still the black ending
+   until Scene 06 is built; that step is the join waiting to be made. */
+.rain__edge {
+  z-index: 9;
+  background: linear-gradient(180deg, #e2b7ad 0%, #cf9c96 100%);
+  opacity: calc(var(--redge) * .95);
+}
+
+/* ============================================================
+   PORTRAIT
+   The band composition again — a 9:16 crop of a two-shot with a
+   wall of bokeh behind it keeps neither the couple nor the lights.
+   The type comes down below the band, where it always does.
+   ============================================================ */
+
+@media (max-aspect-ratio: 1/1) {
+  :root { --rain-run: 620svh; }
+
+  .rain__video { object-position: 50% 50%; }
+
+  .rain__vig {
+    background:
+      radial-gradient(120% 74% at 50% 42%,
+        rgba(0, 0, 0, 0) 44%, rgba(0, 0, 0, .16) 76%, rgba(0, 0, 0, .42) 100%),
+      linear-gradient(to bottom,
+        rgba(10, 10, 20, .26) 0%, rgba(10, 10, 20, .04) 18%,
+        rgba(10, 10, 20, 0) 28%, rgba(10, 10, 20, 0) 56%,
+        rgba(8, 8, 14, .72) 84%, rgba(6, 6, 12, .90) 100%);
+  }
+
+  .rain-open {
+    left: 8vw;
+    right: 8vw;
+    top: auto;
+    bottom: 27svh;
+    font-size: 10px;
+    letter-spacing: .32em;
+  }
+
+  .rain-main {
+    left: 8vw;
+    right: 8vw;
+    top: auto;
+    bottom: 13svh;
+  }
+
+  .rain-main__h {
+    font-size: clamp(21px, 6.4vw, 36px);
+    line-height: 1.2;
+    text-wrap: balance;
+  }
+
+  .rain-main__sub {
+    margin-top: 2.2svh;
+    font-size: 9.5px;
+    letter-spacing: .3em;
+  }
+
+  .rain-main__glow { display: none; }
+}
+
+/* short landscape */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .rain-open   { top: 30vh; }
+  .rain-main   { top: 40vh; left: 56vw; }
+  .rain-main__h { font-size: clamp(17px, 2.1vw, 30px); }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .rain__plate { filter: none !important; transform: none !important; }
+  .rain__grain { display: none; }
+
+  /* `.rain-main__glow` is NOT hidden here, unlike in every other
+     chapter. Everywhere else it is a decorative light behind the
+     words; in this one it is the dark scrim the cream type is legible
+     because of — measured, a bokeh light directly behind a letter
+     takes the worst cell to 1.06:1 without it. The rule that hides it
+     was copied across chapters and did not belong in this one. */
+}

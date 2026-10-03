@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radhimaa</title>
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Radhimaa">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23000'/><circle cx='16' cy='16' r='5' fill='%23f4c962'/></svg>">
+
+<!-- Critical: the page must be black on the very first paint, before any stylesheet resolves. -->
+<style>
+  html,body{margin:0;padding:0;background:#000;}
+  body{overflow-x:hidden;}
+  .curtain{position:fixed;inset:0;background:#000;z-index:90;}
+</style>
+
+<link rel="preload" as="image" href="assets/img/title-radhimaa.webp" type="image/webp">
+
+<!-- Scene 02's display face. One serif and the interface's own sans, and
+     nothing else in the building. If it never arrives the fallback stack in
+     --mem-serif carries the section. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap">
+
+<link rel="stylesheet" href="assets/css/hero.css">
+<link rel="stylesheet" href="assets/css/memory.css">
+<link rel="stylesheet" href="assets/css/sunrise.css">
+<link rel="stylesheet" href="assets/css/sky.css">
+<link rel="stylesheet" href="assets/css/rain.css">
+<link rel="stylesheet" href="assets/css/finale.css">
+
+<!-- Without JS there is no sequence to run, so the scene simply exists. -->
+<noscript><style>
+  .curtain{display:none!important}
+  .hero__media,.hero__title{opacity:1!important;filter:none!important;transform:none!important}
+  .hero__title{-webkit-mask-image:none!important;mask-image:none!important}
+  .hero__type::before{opacity:1!important}
+  .ui,.reveal{opacity:1!important;transform:none!important;filter:none!important}
+  .scene__line,.ending__mark,.ending__line,.ending__links,.ending__note{
+    opacity:1!important;filter:none!important;transform:none!important}
+  /* Scene 02 has no transport without JS, so it stops being a runway and
+     becomes one held frame: the poster, the type, no air. */
+  .mem{height:100svh}
+  .mem__plate{opacity:1!important;filter:none!important;transform:none!important}
+  .mem__cool,.mem__bloom,.mem__edge{opacity:0!important}
+  .mem__warm{opacity:.45!important}
+  .mem__air{display:none!important}
+  .mem-main__glow,.ln::before{display:none!important}
+  .ln__in{opacity:1!important;-webkit-mask-image:none!important;mask-image:none!important}
+  .mem-main__glow{opacity:.5!important}
+</style></noscript>
+</head>
+
+<body class="is-booting">
+
+<!-- ============================================================
+     SCENE 01 — THE FALL
+     ============================================================ -->
+<div class="stage" id="stage">
+  <div class="hero" id="hero">
+
+    <!-- ---------- the film ---------- -->
+    <div class="hero__viewport">
+      <div class="hero__parallax" id="parallax">
+        <div class="hero__media" id="media">
+          <video
+            id="heroVideo"
+            class="hero__video"
+            poster="assets/video/hero-poster.jpg"
+            muted
+            loop
+            playsinline
+            webkit-playsinline
+            preload="auto"
+            disablepictureinpicture
+            aria-hidden="true"
+            tabindex="-1"></video>
+        </div>
+      </div>
+
+      <!-- atmospheric treatment: vignette + blue light spill. Never a flat overlay. -->
+      <div class="hero__grade" aria-hidden="true"></div>
+      <div class="hero__grain" id="grain" aria-hidden="true"></div>
+    </div>
+
+    <!-- ---------- the centre stack ---------- -->
+    <div class="hero__type" id="type">
+      <div class="hero__typeInner" id="typeInner">
+
+        <h1 class="hero__title" id="title">
+          <picture>
+            <source srcset="assets/img/title-radhimaa.webp" type="image/webp">
+            <img src="assets/img/title-radhimaa.png" alt="Radhimaa" width="1583" height="492" decoding="async">
+          </picture>
+        </h1>
+
+        <p class="hero__tagline reveal" id="heroCaption"></p>
+
+        <!-- The play disc, its waveform and the two platform buttons used to
+             hang here. They are gone: Scene 01 is an opening title, not a
+             player. Sound is still one state with two controls, both at the
+             bottom of the frame — see .foot below and initSound in hero.js. -->
+      </div>
+    </div>
+
+    <!-- scroll-driven darkness, above the scene -->
+    <div class="hero__veil" aria-hidden="true"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     THE INTERFACE LAYER
+     Floating over the film with no container of its own — the
+     composition holds it together, not a bar. Fades out with --p
+     as Scene 01 dissolves.
+     ============================================================ -->
+<div class="ui" id="ui">
+
+  <header class="hdr">
+    <a class="hdr__logo reveal" id="logo" href="#stage" aria-label="Radhimaa — back to top">
+      <picture>
+        <source srcset="assets/img/logo-p.webp" type="image/webp">
+        <img src="assets/img/logo-p.png" alt="" width="175" height="154" decoding="async">
+      </picture>
+    </a>
+
+    <div class="hdr__right">
+      <nav class="hdr__nav reveal" id="nav" aria-label="Primary"></nav>
+
+      <button class="burger reveal" id="menuBtn" type="button"
+              aria-label="Menu" aria-expanded="false" aria-controls="menuPanel">
+        <span aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
+    </div>
+
+    <div class="menu" id="menuPanel" hidden></div>
+  </header>
+
+  <!-- left rail: a line of the story, stood on its end -->
+  <div class="rail rail--l reveal" id="railL">
+    <span class="rail__dot" aria-hidden="true"></span>
+    <span class="rail__line" aria-hidden="true"></span>
+    <span class="rail__text" id="railText"></span>
+    <span class="rail__line" aria-hidden="true"></span>
+    <span class="rail__dot rail__dot--dim" aria-hidden="true"></span>
+  </div>
+
+  <!-- right rail: social, injected from CONTENT.social -->
+  <div class="rail rail--r reveal" id="railR"></div>
+
+  <div class="foot">
+    <button class="foot__sound reveal" id="soundL" type="button" aria-label="Toggle sound">
+      <svg class="foot__spk" viewBox="0 0 24 24" aria-hidden="true">
+        <path class="spk-body" d="M4 9.4h3.5L12 5.2v13.6L7.5 14.6H4z"/>
+        <path class="spk-wave" d="M15.3 9.1a4.2 4.2 0 0 1 0 5.8"/>
+        <path class="spk-wave spk-wave--2" d="M17.9 6.6a7.8 7.8 0 0 1 0 10.8"/>
+      </svg>
+      <span class="lvl" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+    </button>
+
+    <a class="foot__scroll reveal" id="scrollCue" href="#ending">
+      <svg class="foot__arrow" viewBox="0 0 16 22" aria-hidden="true">
+        <path d="M8 1.5v17M2.6 13.2 8 18.8l5.4-5.6"/>
+      </svg>
+      <span class="foot__scrollLabel" id="scrollLabel"></span>
+    </a>
+
+    <button class="foot__sound foot__sound--r reveal" id="soundR" type="button" aria-label="Toggle sound">
+      <span class="foot__soundLabel" id="soundLabel">SOUND OFF</span>
+      <span class="lvl" aria-hidden="true"><i></i><i></i><i></i></span>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     SCENE 02 — THE MEMORY
+
+     A full-screen, scroll-controlled plate. The section pins and the
+     scrollbar becomes the transport: forwards runs the film, backwards
+     rewinds it, stopping stops it. The last frame is held, then the
+     memory dissolves into the darkness the next chapter opens in.
+
+     Nothing here is a container. The viewport is the film frame, and
+     the typography, petals, jasmine and two butterflies are lit by the
+     same scene. Placement is measured — see README.
+     ============================================================ -->
+<section class="mem" id="memory" aria-label="Chapter two — the memory">
+  <div class="mem__frame">
+
+    <div class="mem__plate" id="memPlate">
+      <video id="memVideo" class="mem__video"
+             poster="assets/video/memory-poster.jpg"
+             muted
+             playsinline
+             webkit-playsinline
+             preload="none"
+             disablepictureinpicture
+             aria-hidden="true"
+             tabindex="-1"></video>
+    </div>
+
+    <!-- the grade, tied to the scroll. Never a flat blanket. -->
+    <div class="mem__cool"  id="memCool"  aria-hidden="true"></div>
+    <div class="mem__warm"  id="memWarm"  aria-hidden="true"></div>
+    <div class="mem__bloom" id="memBloom" aria-hidden="true"></div>
+    <div class="mem__vig" aria-hidden="true"></div>
+
+    <!-- the air: petals, dust, jasmine, one heart, two butterflies -->
+    <div class="mem__air" id="memAir" aria-hidden="true">
+      <div class="air" id="airPetals"></div>
+      <div class="air" id="airDust"></div>
+      <div class="air" id="airBlossoms"></div>
+      <span class="heart" id="airHeart"><i class="heart__i"></i></span>
+
+      <span class="fly fly--1" id="memFly1"><span class="fly__y"><span class="fly__b">
+        <svg class="fly__svg" viewBox="0 0 60 44">
+          <g class="fly__w">
+            <path d="M30 21C27 9 17 2 9 4 2 6 2 15 8 19c6 4 16 4 22 2Z"/>
+            <path d="M30 23c-4 6-12 15-19 13-6-2-6-9 0-12 6-3 15-3 19-1Z"/>
+          </g>
+          <g class="fly__w">
+            <path d="M30 21c3-12 13-19 21-17 7 2 7 11 1 15-6 4-16 4-22 2Z"/>
+            <path d="M30 23c4 6 12 15 19 13 6-2 6-9 0-12-6-3-15-3-19-1Z"/>
+          </g>
+          <ellipse class="fly__body" cx="30" cy="22" rx="1.6" ry="8"/>
+        </svg>
+      </span></span></span>
+
+      <span class="fly fly--2" id="memFly2"><span class="fly__y"><span class="fly__b">
+        <svg class="fly__svg" viewBox="0 0 60 44">
+          <g class="fly__w">
+            <path d="M30 21C27 9 17 2 9 4 2 6 2 15 8 19c6 4 16 4 22 2Z"/>
+            <path d="M30 23c-4 6-12 15-19 13-6-2-6-9 0-12 6-3 15-3 19-1Z"/>
+          </g>
+          <g class="fly__w">
+            <path d="M30 21c3-12 13-19 21-17 7 2 7 11 1 15-6 4-16 4-22 2Z"/>
+            <path d="M30 23c4 6 12 15 19 13 6-2 6-9 0-12-6-3-15-3-19-1Z"/>
+          </g>
+          <ellipse class="fly__body" cx="30" cy="22" rx="1.6" ry="8"/>
+        </svg>
+      </span></span></span>
+    </div>
+
+    <!-- The copy lives here rather than in JS so it survives without it.
+         memory.js mirrors each line into data-line for the blurred ghost
+         that carries the reveal; the text itself is written once. -->
+    <div class="mem__type">
+      <p class="mem-eyebrow" id="memEyebrow">
+        <span class="ln"><span class="ln__in">II — How I loved her</span></span>
+      </p>
+
+      <!-- over the embrace: one quiet line, low left, out of both faces -->
+      <p class="mem-aside" id="memAside">
+        <span class="ln"><span class="ln__in">A room full of people, and only her.</span></span>
+      </p>
+
+      <!-- the centrepiece, on the two of them sitting together -->
+      <div class="mem-main" id="memMain">
+        <span class="mem-main__glow" aria-hidden="true"></span>
+        <h2 class="mem-main__h" id="memMainH">
+          <span class="ln"><span class="ln__in">Loving her was mostly this —</span></span>
+          <span class="ln ln--it"><span class="ln__in">sitting still, saying nothing.</span></span>
+        </h2>
+        <p class="mem-main__sub" id="memSub">
+          <span class="ln"><span class="ln__in">We didn’t know it was the best part</span></span>
+        </p>
+      </div>
+    </div>
+
+    <div class="mem__grain" aria-hidden="true"></div>
+    <div class="mem__edge" id="memEdge" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCENE 03 — THE LIGHT
+
+     The same transport as Scene 02 (scrub.js), a different film. This
+     plate opens in near-darkness and the room fills with morning light
+     on its own; the grade only leans on that, and the two warm glows
+     sit exactly where the real windows are. See README.
+     ============================================================ -->
+<section class="sun" id="sunrise" aria-label="Chapter three — the light">
+  <div class="sun__frame">
+
+    <div class="sun__plate" id="sunPlate">
+      <video id="sunVideo" class="sun__video"
+             poster="assets/video/sunrise-poster.jpg"
+             muted
+             playsinline
+             webkit-playsinline
+             preload="none"
+             disablepictureinpicture
+             aria-hidden="true"
+             tabindex="-1"></video>
+    </div>
+
+    <div class="sun__cool"  id="sunCool"  aria-hidden="true"></div>
+    <div class="sun__warm"  id="sunWarm"  aria-hidden="true"></div>
+    <div class="sun__floor" id="sunFloor" aria-hidden="true"></div>
+    <div class="sun__haze"  id="sunHaze"  aria-hidden="true"></div>
+    <div class="sun__beam"  id="sunBeam"  aria-hidden="true"></div>
+    <div class="sun__bloom" id="sunBloom" aria-hidden="true"></div>
+
+    <!-- The petal field. One canvas and one pool for the whole thing:
+         hundreds of elements would be hundreds of style recalcs, and
+         every particle here is a function of scroll rather than of a
+         clock, so the field rewinds with the film. See petals.js. -->
+    <canvas class="sun__pet" id="sunPet" aria-hidden="true"></canvas>
+
+    <!-- dust, and only dust — the butterflies belong to Scene 04 -->
+    <div class="sun__air" aria-hidden="true">
+      <div class="air" id="sunDust"></div>
+    </div>
+
+    <div class="sun__vig" aria-hidden="true"></div>
+
+    <div class="sun__type">
+      <!-- on the darkness, before there is a room to respect -->
+      <p class="sun-open" id="sunOpen">
+        <span class="ln"><span class="ln__in">III — Ordinary mornings</span></span>
+      </p>
+
+      <!-- revealed by the light, in the dark band across the top wall -->
+      <div class="sun-main" id="sunMain">
+        <span class="sun-main__glow" aria-hidden="true"></span>
+        <h2 class="sun-main__h" id="sunMainH">
+          <span class="ln"><span class="ln__in">The light always found her first.</span></span>
+        </h2>
+        <p class="sun-main__sub" id="sunSub">
+          <span class="ln"><span class="ln__in">Some mornings that was enough</span></span>
+        </p>
+      </div>
+    </div>
+
+    <div class="sun__grain" aria-hidden="true"></div>
+    <div class="sun__edge" id="sunEdge" aria-hidden="true"></div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     SCENE 04 — ABOVE EVERYTHING
+
+     The chapter that opens outward: a crowd in red against open sky,
+     the two of them held in the middle of it, dissolving into cloud.
+     The first cool chapter in the building, and the first that does
+     not release into darkness. See README.
+     ============================================================ -->
+<section class="sky" id="skyward" aria-label="Chapter four — everything at once">
+  <div class="sky__frame">
+
+    <div class="sky__plate" id="skyPlate">
+      <video id="skyVideo" class="sky__video"
+             poster="assets/video/sky-poster.jpg"
+             muted
+             playsinline
+             webkit-playsinline
+             preload="none"
+             disablepictureinpicture
+             aria-hidden="true"
+             tabindex="-1"></video>
+    </div>
+
+    <div class="sky__deep" id="skyDeep" aria-hidden="true"></div>
+    <div class="sky__warm" id="skyWarm" aria-hidden="true"></div>
+    <div class="sky__lift" id="skyLift" aria-hidden="true"></div>
+    <div class="sky__cold" id="skyCold" aria-hidden="true"></div>
+
+    <!-- The world: butterflies in three depth layers, rose petals,
+         motes. Two canvases with the typography between them, so a
+         butterfly can pass behind a line and another in front of it
+         in the same frame. See assets/js/wings.js. -->
+    <canvas class="sky__pet" id="skyPet" aria-hidden="true"></canvas>
+
+    <div class="sky__vig" aria-hidden="true"></div>
+
+    <div class="sky__type">
+      <p class="sky-open" id="skyOpen">
+        <span class="ln"><span class="ln__in">IV — Everything at once</span></span>
+      </p>
+
+      <div class="sky-main" id="skyMain">
+        <span class="sky-main__glow" aria-hidden="true"></span>
+        <h2 class="sky-main__h" id="skyMainH">
+          <span class="ln"><span class="ln__in">They lifted us, and the world turned to sky.</span></span>
+        </h2>
+        <p class="sky-main__sub" id="skySub">
+          <span class="ln"><span class="ln__in">Nothing after that was the same colour</span></span>
+        </p>
+      </div>
+    </div>
+
+    <canvas class="sky__fore" id="skyFore" aria-hidden="true"></canvas>
+
+    <div class="sky__grain" aria-hidden="true"></div>
+    <div class="sky__edge" id="skyEdge" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCENE 05 — THE NIGHT IT RAINED
+
+     Night, rain and a wall of bokeh. It opens in the same pale mist
+     Scene 04 dissolves into and ends in its own warm bloom, so both
+     ends of this plate are load-bearing and neither is trimmed.
+     ============================================================ -->
+<section class="rain" id="rainfall" aria-label="Chapter five — a night that stayed on">
+  <div class="rain__frame">
+
+    <div class="rain__plate" id="rainPlate">
+      <video id="rainVideo" class="rain__video"
+             poster="assets/video/rain-poster.jpg"
+             muted
+             playsinline
+             webkit-playsinline
+             preload="none"
+             disablepictureinpicture
+             aria-hidden="true"
+             tabindex="-1"></video>
+    </div>
+
+    <div class="rain__night" id="rainNight" aria-hidden="true"></div>
+    <div class="rain__lit"   id="rainLit"   aria-hidden="true"></div>
+
+    <!-- The lights. Distant points and fireflies below the words, the
+         foreground bokeh above them, so one can pass behind a line
+         while another passes in front. See assets/js/lumen.js. -->
+    <canvas class="rain__lite" id="rainLite" aria-hidden="true"></canvas>
+
+    <div class="rain__bloom" id="rainBloom" aria-hidden="true"></div>
+    <div class="rain__vig" aria-hidden="true"></div>
+
+    <div class="rain__type">
+      <p class="rain-open" id="rainOpen">
+        <span class="ln"><span class="ln__in">V — A night that stayed on</span></span>
+      </p>
+
+      <div class="rain-main" id="rainMain">
+        <span class="rain-main__glow" aria-hidden="true"></span>
+        <h2 class="rain-main__h" id="rainMainH">
+          <span class="ln"><span class="ln__in">Everything else went out, and this didn't.</span></span>
+        </h2>
+        <p class="rain-main__sub" id="rainSub">
+          <span class="ln"><span class="ln__in">Some of it is still lit</span></span>
+        </p>
+      </div>
+    </div>
+
+    <canvas class="rain__fore" id="rainFore" aria-hidden="true"></canvas>
+
+    <div class="rain__grain" aria-hidden="true"></div>
+    <div class="rain__edge" id="rainEdge" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCENE 06 — AFTER EVERYTHING
+
+     The last chapter: a burning sky, a chandelier hanging in it, a red
+     dais, and a ring of cloaked figures closing around the two of them.
+     The warmest plate in the film and the stillest, which is what lets
+     the type sit in the sky and stay there. The only chapter that
+     releases to black — it is handing over to the ending.
+     ============================================================ -->
+<section class="fin" id="finale" aria-label="Chapter six — after everything">
+  <div class="fin__frame">
+
+    <div class="fin__plate" id="finPlate">
+      <video id="finVideo" class="fin__video"
+             poster="assets/video/finale-poster.jpg"
+             muted
+             playsinline
+             webkit-playsinline
+             preload="none"
+             disablepictureinpicture
+             aria-hidden="true"
+             tabindex="-1"></video>
+    </div>
+
+    <div class="fin__deep" id="finDeep" aria-hidden="true"></div>
+    <div class="fin__burn" id="finBurn" aria-hidden="true"></div>
+    <div class="fin__rose" id="finRose" aria-hidden="true"></div>
+
+    <!-- The flower field: three depth layers that open as you scroll,
+         the petal fall, and the glints. Two canvases with the type
+         between them. See assets/js/bloom.js. -->
+    <canvas class="fin__flow" id="finFlow" aria-hidden="true"></canvas>
+
+    <div class="fin__vig" aria-hidden="true"></div>
+
+    <div class="fin__type">
+      <p class="fin-open" id="finOpen">
+        <span class="ln"><span class="ln__in">VI — After everything</span></span>
+      </p>
+
+      <div class="fin-main" id="finMain">
+        <span class="fin-main__glow" aria-hidden="true"></span>
+        <h2 class="fin-main__h" id="finMainH">
+          <span class="ln"><span class="ln__in">This is the version I kept.</span></span>
+        </h2>
+        <p class="fin-main__sub" id="finSub">
+          <span class="ln"><span class="ln__in">And I'm not giving it back</span></span>
+        </p>
+      </div>
+    </div>
+
+    <canvas class="fin__fore" id="finFore" aria-hidden="true"></canvas>
+
+    <div class="fin__grain" aria-hidden="true"></div>
+    <div class="fin__edge" id="finEdge" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SCENES 02+ — THE CAPTIONS
+     Injected from CONTENT.captions in hero.js. Empty until the exact
+     lines are supplied; the scroll then simply runs hero → ending.
+     ============================================================ -->
+<div id="captions"></div>
+
+<!-- ============================================================
+     THE ENDING
+     ============================================================ -->
+<footer class="ending" id="ending" data-scene aria-label="The end">
+  <div class="ending__inner">
+
+    <!-- the same artwork the film opens on, at a third of the size:
+         an opening title and a closing card are one object seen twice -->
+    <p class="ending__mark">
+      <picture>
+        <source srcset="assets/img/title-radhimaa.webp" type="image/webp">
+        <img src="assets/img/title-radhimaa.png" alt="Radhimaa"
+             width="1583" height="492" decoding="async" loading="lazy">
+      </picture>
+    </p>
+
+    <p class="ending__line" id="endingLine"></p>
+
+    <div class="ending__links" id="endingLinks"></div>
+    <p class="ending__note" id="endingNote"></p>
+  </div>
+</footer>
+
+<!-- the initial darkness -->
+<div class="curtain" id="curtain"></div>
+
+<script>
+/* Choose the encode before the parser moves on, so preload starts immediately
+   and only one file is ever fetched. <source media> is not reliable on <video>,
+   which is why this is done here rather than in markup. */
+(function () {
+  var v = document.getElementById('heroVideo');
+  if (!v) return;
+  var portrait = window.matchMedia('(max-aspect-ratio: 1/1)').matches;
+  var base = (portrait || window.innerWidth < 900)
+    ? 'assets/video/hero-mobile'
+    : 'assets/video/hero-desktop';
+  [['webm', 'video/webm'], ['mp4', 'video/mp4']].forEach(function (f) {
+    var s = document.createElement('source');
+    s.src = base + '.' + f[0];
+    s.type = f[1];
+    v.appendChild(s);
+  });
+  v.muted = true;            // required for autoplay; the theme control unmutes
+  v.load();
+})();
+</script>
+
+<!-- Scene 02's plate is chosen in memory.js, not here. The hero picks its
+     encode inline so preload can start during parsing; Scene 02's is
+     preload="none" on purpose — up to 9.4MB of all-intra picture that must
+     not compete with the hero's arrival — so there is nothing to gain from
+     choosing early, and one source of truth is worth more. -->
+
+<script src="assets/js/hero.js" defer></script>
+
+<!-- The scroll transport every cinematic chapter shares. Must load before
+     them; all of these are deferred, so markup order is execution order. -->
+<script src="assets/js/scrub.js" defer></script>
+<script src="assets/js/petals.js" defer></script>
+<script src="assets/js/wings.js" defer></script>
+<script src="assets/js/lumen.js" defer></script>
+<script src="assets/js/bloom.js" defer></script>
+<script src="assets/js/memory.js" defer></script>
+<script src="assets/js/sunrise.js" defer></script>
+<script src="assets/js/sky.js" defer></script>
+<script src="assets/js/rain.js" defer></script>
+<script src="assets/js/finale.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,375 @@
+/* ============================================================
+   RADHIMAA — SCENE 06 · AFTER EVERYTHING
+
+   The last chapter, and the only one staged rather than filmed: a
+   burning sky, a chandelier hanging in it, a red dais, and a ring
+   of cloaked figures closing around the two of them.
+
+   Measured off the shipped plate:
+
+     T 0.00-0.45   L 135 -> 43, R-B +73 -> +25   black fabric sweeps in
+     T 0.60-2.25   L 78 -> 95, R-B +56 -> +63    the tableau, near-still
+     T 2.25-3.45   L 95 -> 130, R-B -> **+86**   the push-in to the close
+
+   +86 makes it the warmest plate in the building by a wide margin,
+   and the tableau measures activity 0-4 across almost the whole
+   frame — the stillest as well. Both of those are what let the
+   typography sit in the sky and stay there.
+   ============================================================ */
+
+@property --fenter { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --fdeep  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --fburn  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --fedge  { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+/* The colour opening back up after Scene 05's night, and how far the
+   sunset has reached the flowers. Both drive from paint(). */
+@property --frose  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --flit   { syntax: '<number>'; inherits: false; initial-value: 0; }
+
+:root {
+  /* sampled from Scene 06's own plate */
+  --fin-sky:   #c79454;   /* the sky where the type sits */
+  --fin-blaze: #e2bd63;   /* the bright band under it */
+  --fin-dais:  #330e10;   /* the red the two of them stand on */
+  --fin-ink:   #2b1810;   /* type on that sky */
+  --fin-cream: #f6ead8;
+
+  --fin-run: 660svh;
+}
+
+/* ============================================================
+   THE FRAME
+   ============================================================ */
+
+/* Scene 05 releases into its own warm bloom, so this arrives over
+   that colour and not over black — see the note on the join rule in
+   the README. */
+.fin {
+  position: relative;
+  height: var(--fin-run);
+  background: #e2b7ad;
+}
+
+.fin__frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: #e2b7ad;
+  isolation: isolate;
+  z-index: 0;
+}
+
+.fin__plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: var(--fenter);
+  transform: translate3d(0, 0, 0) scale(calc(1.04 - var(--fenter) * .04));
+  filter: blur(calc((1 - var(--fenter)) * 14px));
+  will-change: opacity, transform, filter;
+}
+
+.fin--in .fin__plate  { will-change: opacity, transform; filter: none; }
+.fin--out .fin__plate { will-change: auto; }
+
+.fin__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* the chandelier is the top of the frame and the dais the bottom;
+     on a short window the dais is what can go */
+  object-position: 50% 40%;
+  display: block;
+  background: #000;
+}
+
+.fin-live .ui { visibility: hidden; }
+
+/* ============================================================
+   THE GRADE
+   The plate is already burning. Two layers, both small: a little
+   weight while the fabric is still moving, and a little more heat
+   through the push-in. Nothing invents a light here either.
+   ============================================================ */
+
+.fin__deep,
+.fin__burn,
+.fin__rose,
+.fin__vig,
+.fin__grain,
+.fin__edge,
+.fin__flow,
+.fin__fore { position: absolute; inset: 0; pointer-events: none; }
+
+.fin__deep {
+  z-index: 1;
+  opacity: var(--fdeep);
+  background:
+    linear-gradient(182deg, rgba(60, 26, 12, .28) 0%, rgba(24, 12, 10, .34) 100%),
+    radial-gradient(102% 82% at 50% 40%, transparent 40%, rgba(30, 12, 8, .34) 100%);
+  mix-blend-mode: soft-light;
+}
+
+.fin__burn {
+  z-index: 2;
+  opacity: var(--fburn);
+  background:
+    radial-gradient(76% 68% at 50% 34%, rgba(255, 196, 108, .26), transparent 76%),
+    linear-gradient(180deg, rgba(255, 186, 96, .14), rgba(180, 74, 34, .16));
+  mix-blend-mode: soft-light;
+}
+
+/* ---------- the colour opening back up ----------
+
+   §02: after the night, the world should feel like it is opening
+   again. The plate does most of it by itself — it travels R−B +25 to
+   +86 — so this is a rose and lavender lift over the top of that
+   heat, weighted to the sky where the sunset is and to the dais where
+   the red already is. Screened at these alphas it is a few percent:
+   a temperature, not a wash. */
+.fin__rose {
+  z-index: 3;
+  opacity: var(--frose);
+  background:
+    radial-gradient(86% 52% at 42% 6%, rgba(255, 176, 186, .20), transparent 74%),
+    radial-gradient(40% 30% at 46% 74%, rgba(226, 132, 118, .16), transparent 78%),
+    linear-gradient(186deg, rgba(206, 168, 226, .10) 0%, rgba(255, 196, 156, .06) 58%,
+      rgba(120, 72, 96, .10) 100%);
+  mix-blend-mode: screen;
+  will-change: opacity;
+}
+
+/* ---------- the flower field ----------
+   Two canvases with the typography between them, the arrangement the
+   last three chapters share: background and midground flowers and the
+   petal fall below the words, the foreground above. See bloom.js. */
+.fin__flow { z-index: 4; display: block; width: 100%; height: 100%; }
+.fin__fore { z-index: 7; display: block; width: 100%; height: 100%; }
+
+.fin__vig {
+  z-index: 5;
+  background:
+    radial-gradient(124% 96% at 50% 42%,
+      rgba(0, 0, 0, 0) 42%, rgba(24, 10, 6, .18) 76%, rgba(18, 8, 6, .50) 100%),
+    linear-gradient(to bottom,
+      rgba(24, 10, 6, .18) 0%, rgba(0, 0, 0, 0) 20%,
+      rgba(0, 0, 0, 0) 70%, rgba(10, 6, 6, .38) 100%);
+}
+
+/* ============================================================
+   THE AIR
+
+   Eleven DOM embers used to rise here. They are gone: this chapter is
+   now the flower field — three depth layers that open as you scroll,
+   a petal fall several times richer than Scene 03's, and a few glints
+   where the sunset catches — and that is a canvas problem rather than
+   a stylesheet one.
+
+   The old reasoning still holds and is why the glints are the only
+   graphic added on top: the plate already carries a chandelier and a
+   burning sky, and §12 rules out piling light trails and line art
+   onto that. See bloom.js.
+   ============================================================ */
+
+/* ============================================================
+   TYPOGRAPHY
+
+   The tableau is the stillest frame in the film — activity 0-4
+   across almost all of it — and the sky above the cloaked figures
+   runs L 154-170. So the type sits in the sky at upper-left, in
+   ink, and stays put.
+
+   Left rather than centred because the centre is spoken for twice
+   over: the chandelier occupies cols 9-13 at the top of frame and
+   the two of them stand directly under it, heads at y 23%. The
+   block ends at 39vw and 21vh, clear of both.
+   ============================================================ */
+
+.fin__type {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.fin-open {
+  position: absolute;
+  left: 5vw;
+  top: 7.5vh;
+  margin: 0;
+  max-width: 40vw;
+  font-size: clamp(9.5px, .8vw, 13px);
+  letter-spacing: .38em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #2b1810;
+  /* A light halo, which is the dark tight shadow inverted. This sky is
+     not one brightness — it is banded, L 121-200 — so ink lands on both
+     the blaze and the cloud. A pale halo hugging the letterforms
+     restores separation on the dark bands exactly the way a dark one
+     does for cream on a bright frame. */
+  /* The pale halo, tightened. Measured over the glyph extents inside
+     its own window the eyebrow reads 5.5-6.2:1 on the mean but 4.14:1
+     on the darkest pixel — a dark cloud band passing under small
+     type. A 4px light ring hugging the strokes is what keeps that
+     band off the letterforms, and it is the exact inverse of the
+     tight dark ring the cream chapters use. */
+  text-shadow:
+    0 1px 2px rgba(255, 240, 214, .9),
+    0 0 4px rgba(255, 244, 224, .92),
+    0 0 10px rgba(255, 236, 206, .75);
+}
+
+.fin-main {
+  position: absolute;
+  left: 5vw;
+  top: 11.5vh;
+  width: min(34vw, 560px);
+}
+
+/* A lift rather than a glow: the ground is already the brightest
+   thing on screen, so light behind the words does nothing and the
+   only thing that helps is warm paper under the ink. */
+.fin-main__glow {
+  position: absolute;
+  left: -16%;
+  right: -16%;
+  top: -80%;
+  bottom: -70%;
+  background: radial-gradient(58% 120% at 40% 50%,
+    rgba(255, 238, 210, .62), rgba(252, 220, 172, .30) 48%, transparent 78%);
+  filter: blur(20px);
+  opacity: calc(var(--mt) * .95);
+  pointer-events: none;
+}
+
+.fin-main__h {
+  position: relative;
+  margin: 0;
+  font-family: var(--mem-serif);
+  font-weight: 300;
+  font-size: clamp(19px, 2.7vw, 44px);
+  line-height: 1.18;
+  letter-spacing: .005em;
+  color: var(--fin-ink);
+  text-wrap: balance;
+  /* the pale halo that makes ink survive a banded sky, and then a
+     little of the sunset's own warmth as it reaches everything else */
+  text-shadow:
+    0 1px 2px rgba(255, 240, 214, .75),
+    0 0 calc(18px * var(--flit)) rgba(255, 224, 186, calc(.34 * var(--flit)));
+}
+
+.fin-main__sub {
+  position: relative;
+  margin: 2.0vh 0 0;
+  font-size: clamp(9px, .74vw, 12px);
+  letter-spacing: .32em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #2b1810;
+  text-shadow: 0 1px 2px rgba(255, 240, 214, .9), 0 0 9px rgba(255, 236, 206, .7);
+}
+
+/* ============================================================
+   GRAIN + THE LAST RELEASE
+   ============================================================ */
+
+.fin__grain {
+  inset: -140px;
+  z-index: 8;
+  opacity: .045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 1.1s steps(5) infinite;
+}
+
+/* This one *does* go to black — it is the last chapter, and what it
+   hands over to is the ending. The film opens on a black frame that
+   is held until the plate can play, and it closes on the same thing. */
+.fin__edge {
+  z-index: 9;
+  background: #000;
+  opacity: calc(var(--fedge) * .98);
+}
+
+/* ============================================================
+   PORTRAIT
+   ============================================================ */
+
+@media (max-aspect-ratio: 1/1) {
+  :root { --fin-run: 600svh; }
+
+  .fin__video { object-position: 50% 50%; }
+
+  .fin__vig {
+    background:
+      radial-gradient(120% 74% at 50% 42%,
+        rgba(0, 0, 0, 0) 44%, rgba(24, 10, 6, .14) 76%, rgba(18, 8, 6, .38) 100%),
+      linear-gradient(to bottom,
+        rgba(24, 10, 6, .22) 0%, rgba(24, 10, 6, .04) 18%,
+        rgba(24, 10, 6, 0) 28%, rgba(24, 10, 6, 0) 56%,
+        rgba(12, 6, 6, .72) 84%, rgba(8, 4, 4, .90) 100%);
+  }
+
+  /* below the band the field is a blurred, darkened sky, so the type
+     flips back to cream — ink would vanish into it */
+  .fin-open {
+    left: 8vw;
+    right: 8vw;
+    top: auto;
+    bottom: 27svh;
+    max-width: none;
+    font-size: 10px;
+    letter-spacing: .32em;
+    color: rgba(246, 234, 216, .86);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .7);
+  }
+
+  .fin-main {
+    left: 8vw;
+    right: 8vw;
+    top: auto;
+    bottom: 13svh;
+    width: auto;
+  }
+
+  .fin-main__h {
+    font-size: clamp(21px, 6.4vw, 36px);
+    line-height: 1.2;
+    color: var(--fin-cream);
+    text-shadow: 0 2px 24px rgba(0, 0, 0, .55);
+  }
+
+  .fin-main__sub {
+    margin-top: 2.2svh;
+    font-size: 9.5px;
+    letter-spacing: .3em;
+    color: rgba(246, 234, 216, .84);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  }
+
+  .fin-main__glow { display: none; }
+}
+
+/* short landscape */
+@media (max-height: 560px) and (min-aspect-ratio: 1/1) {
+  .fin-open   { top: 6vh; }
+  .fin-main   { top: 10vh; width: min(42vw, 520px); }
+  .fin-main__h { font-size: clamp(17px, 2.2vw, 32px); }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .fin__plate { filter: none !important; transform: none !important; }
+  .fin__grain { display: none; }
+  .fin-main__glow { display: none; }
+}

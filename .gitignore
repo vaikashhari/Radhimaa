@@ -1,0 +1,28 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.vscode/
+.idea/
+
+# local tooling
+node_modules/
+.claude/settings.local.json
+
+# scratch
+tmp/
+*.log
+
+# ------------------------------------------------------------------
+# The raw camera masters. Deliberately not published: they are 75MB of
+# unreleased footage and the site does not need them — they were only
+# the input to the encodes in assets/video/, which ARE committed.
+# Keep them somewhere backed up; the encode recipes are in README.md.
+# ------------------------------------------------------------------
+# Anchored to the repo root with a leading slash. An unanchored
+# `*.MP4` also matches `.mp4` on Windows, where git is case-insensitive
+# by default — which silently excluded all 22 encoded plates in
+# assets/video/ and would have shipped a film with no film in it.
+/*.mov
+/*.MP4
