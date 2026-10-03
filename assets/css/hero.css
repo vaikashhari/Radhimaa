@@ -761,6 +761,25 @@ body {
 
 .ending__note:empty { display: none; }
 
+.ending__credit {
+  position: absolute;
+  left: 7vw;
+  right: 7vw;
+  bottom: clamp(7px, 1.4vh, 16px);
+  margin: 0;
+  font-size: 9px;
+  font-weight: 300;
+  letter-spacing: .24em;
+  text-indent: .24em;
+  text-transform: uppercase;
+  color: rgba(236, 241, 250, .28);
+  opacity: clamp(0, calc((var(--q) - .68) / .20), 1);
+}
+
+.ending__credit span {
+  color: rgba(245, 213, 124, .58);
+}
+
 /* ============================================================
    PORTRAIT — scenes
    ============================================================ */
